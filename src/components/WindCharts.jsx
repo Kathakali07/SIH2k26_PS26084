@@ -64,7 +64,10 @@ export default function WindCharts({ type }) {
               dataKey="val" 
               stroke="#ffffff" 
               strokeWidth={1.5} 
-              dot={false} 
+              dot={false}
+              isAnimationActive={true}
+              animationDuration={1500}
+              animationEasing="ease-out"
             />
           </LineChart>
         </ResponsiveContainer>

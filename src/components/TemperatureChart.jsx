@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
+import { motion } from 'framer-motion';
 
 const generateData = () => {
   const tempCurve = [
@@ -31,15 +32,14 @@ const generateData = () => {
   });
 };
 
-export default function TemperatureChart() {
-  const [activeTab, setActiveTab] = useState('temperature');
+export default function TemperatureChart({ activeMapLayer, setActiveMapLayer }) {
   const data = useMemo(() => generateData(), []);
 
   return (
     <div className="flex flex-col h-full bg-[#1e1e1e]">
       <div className="border-y border-gray-500 py-1 mb-2">
         <h3 className="text-center text-lg text-gray-200 font-light">
-          {activeTab === 'temperature' ? 'Temperature for Adelaide' : 'Humidity for Adelaide'}
+          {activeMapLayer === 'temperature' ? 'Temperature for Adelaide' : 'Humidity for Adelaide'}
         </h3>
       </div>
       
@@ -57,46 +57,55 @@ export default function TemperatureChart() {
               tick={{fill: '#aaa'}}
             />
             <YAxis 
-              domain={activeTab === 'temperature' ? [9, 15] : [40, 100]} 
+              domain={activeMapLayer === 'temperature' ? [9, 15] : [40, 100]} 
               stroke="#888" 
               fontSize={10} 
               tickLine={false} 
               axisLine={{ stroke: '#555' }}
-              ticks={activeTab === 'temperature' ? [9, 10, 11, 12, 13, 14, 15] : [40, 50, 60, 70, 80, 90, 100]}
-              tickFormatter={(val) => activeTab === 'temperature' ? `${val}°C` : `${val}%`}
+              ticks={activeMapLayer === 'temperature' ? [9, 10, 11, 12, 13, 14, 15] : [40, 50, 60, 70, 80, 90, 100]}
+              tickFormatter={(val) => activeMapLayer === 'temperature' ? `${val}°C` : `${val}%`}
               tick={{fill: '#aaa'}}
             />
             <Tooltip 
               cursor={{fill: '#333'}}
               contentStyle={{ backgroundColor: '#222', border: '1px solid #555', borderRadius: '4px' }}
               itemStyle={{ color: '#fff' }}
-              formatter={(value) => activeTab === 'temperature' ? [`${value}°C`, 'Temperature'] : [`${value}%`, 'Humidity']}
+              formatter={(value) => activeMapLayer === 'temperature' ? [`${value}°C`, 'Temperature'] : [`${value}%`, 'Humidity']}
             />
             <Bar 
-              dataKey={activeTab === 'temperature' ? "temp" : "hum"} 
-              fill={activeTab === 'temperature' ? "#ffffff" : "#a855f7"} 
-              barSize={8} 
+              dataKey={activeMapLayer === 'temperature' ? "temp" : "hum"} 
+              fill={activeMapLayer === 'temperature' ? "#ffffff" : "#a855f7"} 
+              barSize={8}
+              isAnimationActive={true}
+              animationDuration={1500}
+              animationEasing="ease-out"
             />
           </BarChart>
         </ResponsiveContainer>
       </div>
       
-      <div className="flex gap-4 pt-2 border-t border-gray-500 mt-2 shrink-0">
+      <div className="flex gap-4 pt-2 border-t border-gray-500 mt-2 shrink-0 relative">
         <button 
-          onClick={() => setActiveTab('temperature')}
-          className={`text-[11px] font-medium pb-1 px-1 border-b-2 ${
-            activeTab === 'temperature' ? 'text-white border-[#20b2aa]' : 'text-gray-400 border-transparent hover:text-gray-200'
+          onClick={() => setActiveMapLayer('temperature')}
+          className={`relative text-[11px] font-medium pb-1 px-1 transition-colors duration-300 ${
+            activeMapLayer === 'temperature' ? 'text-white' : 'text-gray-400 hover:text-white'
           }`}
         >
           Temperature Forecast
+          {activeMapLayer === 'temperature' && (
+            <motion.div layoutId="tempUnderline" className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#20b2aa]" />
+          )}
         </button>
         <button 
-          onClick={() => setActiveTab('humidity')}
-          className={`text-[11px] font-medium pb-1 px-1 border-b-2 ${
-            activeTab === 'humidity' ? 'text-white border-[#20b2aa]' : 'text-gray-400 border-transparent hover:text-gray-200'
+          onClick={() => setActiveMapLayer('humidity')}
+          className={`relative text-[11px] font-medium pb-1 px-1 transition-colors duration-300 ${
+            activeMapLayer === 'humidity' ? 'text-white' : 'text-gray-400 hover:text-white'
           }`}
         >
           Humidity Forecast
+          {activeMapLayer === 'humidity' && (
+            <motion.div layoutId="tempUnderline" className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#20b2aa]" />
+          )}
         </button>
       </div>
     </div>

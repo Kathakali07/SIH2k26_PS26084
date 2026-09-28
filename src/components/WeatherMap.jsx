@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import L from 'leaflet';
+import { motion } from 'framer-motion';
 
 export default function WeatherMap({ activeMapLayer, isMapEnlarged, onToggleMapEnlarge }) {
   const mapContainerRef = useRef(null);
@@ -158,7 +159,9 @@ export default function WeatherMap({ activeMapLayer, isMapEnlarged, onToggleMapE
       <div ref={mapContainerRef} className="w-full h-full z-0" />
       {/* Top right buttons */}
       <div className="absolute top-3 right-3 z-[400] flex gap-1">
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={onToggleMapEnlarge}
           title={isMapEnlarged ? "Collapse Map" : "Enlarge Map"}
           className="bg-[#0f172a] p-1.5 border border-cyan-800 rounded text-cyan-500 hover:bg-gray-800 transition-colors shadow-lg"
@@ -168,7 +171,7 @@ export default function WeatherMap({ activeMapLayer, isMapEnlarged, onToggleMapE
           ) : (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
           )}
-        </button>
+        </motion.button>
       </div>
       {/* Attribution overlay */}
       <div className="absolute bottom-0 left-0 right-0 bg-[#1e1e1e]/80 p-2 text-[10px] text-gray-300 z-[400]">
