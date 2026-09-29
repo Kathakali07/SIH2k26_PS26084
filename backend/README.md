@@ -36,6 +36,8 @@ python backend/generate_mock.py --num-frames 20 --write-tensor
 
 Per-frame files contain `radar_dbz`, `ir_temp`, and `vil` arrays. The optional combined `mock_radar_tensor.npy` has `[Batch, Time, Channel, Height, Width]` layout. The grid is 500×500 at the demo's 1 km/pixel assumption.
 
+Frame timestamps are stored as UTC ISO-8601. Legacy demo frames without a timestamp derive one from the numeric frame suffix at five-minute spacing. The input normalizer validates finite values and ranges (`-40..100 dBZ`, `150..350 K` for IR temperature, `0..500` for VIL), consistent spatial dimensions, and strictly increasing frame times. The pixel transform uses the configured northwest origin (88.3639°E, 22.5726°N), 1 km per pixel, approximately 103 km/degree longitude and 111 km/degree latitude; row coordinates increase southward.
+
 ## Verify
 
 ```bash

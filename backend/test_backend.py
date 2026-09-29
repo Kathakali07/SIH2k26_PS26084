@@ -1,13 +1,16 @@
 """Focused checks for the synthetic PRAMAAN-X backend demo."""
 
 import unittest
+from datetime import timedelta
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import cv2
 import numpy as np
 from fastapi.testclient import TestClient
 
-from backend.engine import NowcastEngine
-from backend.generate_mock import build_sevir_tensor, load_mock_frames
+from backend.engine import DEMO_BASE_TIME, NowcastEngine
+from backend.generate_mock import build_sevir_tensor, generate_mock_data, load_mock_frames
 from backend.main import app, state
 
 
@@ -18,6 +21,64 @@ class MockDataTests(unittest.TestCase):
         self.assertEqual(tensor.shape, (1, 20, 1, 500, 500))
         self.assertEqual(tensor.dtype, np.float32)
         self.assertGreater(float(tensor.max()), 55.0)
+
+    def test_loader_rejects_missing_values_wrong_shape_and_bad_timestamps(self):
+        with TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            frame_path = directory / "frame_000.npy"
+            np.save(frame_path, {"radar_dbz": np.array([[np.nan]], dtype=np.float32)})
+            with self.assertRaisesRegex(ValueError, "finite"):
+                NowcastEngine.load_frames(directory)
+
+            np.save(frame_path, {"radar_dbz": np.zeros((2, 2, 1), dtype=np.float32)})
+            with self.assertRaisesRegex(ValueError, "2D"):
+                NowcastEngine.load_frames(directory)
+
+            np.save(frame_path, {"ir_temp": np.zeros((2, 2), dtype=np.float32)})
+            with self.assertRaisesRegex(ValueError, "missing radar_dbz"):
+                NowcastEngine.load_frames(directory)
+
+            np.save(frame_path, {"radar_dbz": np.full((2, 2), 110.0, dtype=np.float32)})
+            with self.assertRaisesRegex(ValueError, "-40..100 dBZ"):
+                NowcastEngine.load_frames(directory)
+
+            np.save(frame_path, {"radar_dbz": np.zeros((2, 2), dtype=np.float32), "timestamp_utc": "not-a-time"})
+            with self.assertRaisesRegex(ValueError, "ISO-8601"):
+                NowcastEngine.load_frames(directory)
+
+    def test_loader_rejects_non_increasing_timestamps(self):
+        with TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            radar = np.zeros((2, 2), dtype=np.float32)
+            np.save(directory / "frame_000.npy", {"radar_dbz": radar, "timestamp_utc": "2026-09-29T12:05:00Z"})
+            np.save(directory / "frame_001.npy", {"radar_dbz": radar, "timestamp_utc": "2026-09-29T12:00:00Z"})
+            with self.assertRaisesRegex(ValueError, "later than"):
+                NowcastEngine.load_frames(directory)
+
+    def test_loader_rejects_spatial_mismatch_and_invalid_optional_fields(self):
+        with TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            np.save(directory / "frame_000.npy", {"radar_dbz": np.zeros((2, 2), dtype=np.float32)})
+            np.save(directory / "frame_001.npy", {"radar_dbz": np.zeros((2, 3), dtype=np.float32)})
+            with self.assertRaisesRegex(ValueError, r"expected \(2, 2\)"):
+                NowcastEngine.load_frames(directory)
+
+        with TemporaryDirectory() as temp_dir:
+            directory = Path(temp_dir)
+            np.save(directory / "frame_000.npy", {
+                "radar_dbz": np.zeros((2, 2), dtype=np.float32),
+                "ir_temp": np.full((2, 2), np.nan, dtype=np.float32),
+            })
+            with self.assertRaisesRegex(ValueError, "ir_temp must match"):
+                NowcastEngine.load_frames(directory)
+
+    def test_generated_frames_have_increasing_utc_times_and_stack(self):
+        with TemporaryDirectory() as temp_dir:
+            generate_mock_data(temp_dir, num_frames=3)
+            frames = NowcastEngine.load_frames(temp_dir)
+            self.assertEqual(len(frames), 3)
+            self.assertEqual((frames[1]["timestamp_utc"] - frames[0]["timestamp_utc"]).total_seconds(), 300.0)
+            self.assertEqual(build_sevir_tensor(frames).shape, (1, 3, 1, 500, 500))
 
     def test_tracking_follows_a_moving_cell(self):
         engine = NowcastEngine()
@@ -36,6 +97,32 @@ class MockDataTests(unittest.TestCase):
         engine._classify_hazard(cell)
         self.assertEqual(cell["hazard_type"], "Cloudburst")
         self.assertEqual(cell["severity"], "HIGH")
+
+    def test_no_storm_frames_return_empty_and_polygon_is_closed(self):
+        engine = NowcastEngine()
+        self.assertEqual(engine.match_and_classify_cells(np.zeros((3, 1, 40, 40), dtype=np.float32)), {})
+        with self.assertRaisesRegex(ValueError, "Time, 1"):
+            engine.match_and_classify_cells(np.zeros((1, 2, 2, 8, 8), dtype=np.float32))
+        with self.assertRaisesRegex(ValueError, "supported -40..100"):
+            engine.match_and_classify_cells(np.full((1, 2, 1, 8, 8), 150.0, dtype=np.float32))
+
+        frame = np.zeros((40, 40), dtype=np.float32)
+        cv2.circle(frame, (12, 15), 6, 60.0, -1)
+        cells = engine.extract_storm_cells(frame)
+        self.assertEqual(len(cells), 1)
+        self.assertEqual(cells[0]["ring"][0], cells[0]["ring"][-1])
+        self.assertAlmostEqual(cells[0]["position"][0], 88.3639 + cells[0]["centroid"][0] / 103.0)
+
+    def test_motion_speed_uses_frame_timestamps(self):
+        engine = NowcastEngine()
+        engine.frame_timestamps = [DEMO_BASE_TIME, DEMO_BASE_TIME + timedelta(minutes=10)]
+        frames = np.zeros((2, 1, 100, 100), dtype=np.float32)
+        cv2.circle(frames[0, 0], (25, 30), 8, 60.0, -1)
+        cv2.circle(frames[1, 0], (31, 34), 8, 62.0, -1)
+        tracks = engine.match_and_classify_cells(frames)
+        latest = max(tracks.values(), key=lambda item: item["last_seen_frame"])
+        self.assertEqual(latest["motion"]["elapsed_minutes"], 10.0)
+        self.assertAlmostEqual(latest["motion"]["speed_kmh"], np.hypot(6, 4) * 6.0, places=3)
 
 
 class ApiTests(unittest.TestCase):

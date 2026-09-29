@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import cv2
@@ -40,7 +41,13 @@ def generate_mock_data(output_dir: str | Path = DEFAULT_OUTPUT_DIR, num_frames: 
         vil = radar_dbz * 0.5
 
         path = output / f"frame_{i:03d}.npy"
-        np.save(path, {"radar_dbz": radar_dbz, "ir_temp": ir_temp, "vil": vil})
+        timestamp = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc) + timedelta(minutes=5 * i)
+        np.save(path, {
+            "radar_dbz": radar_dbz,
+            "ir_temp": ir_temp,
+            "vil": vil,
+            "timestamp_utc": timestamp.isoformat(timespec="seconds").replace("+00:00", "Z"),
+        })
         paths.append(path)
 
         cell1_pos[0] += cell1_vel[0]
@@ -60,10 +67,24 @@ def load_mock_frames(input_dir: str | Path = DEFAULT_OUTPUT_DIR) -> list[dict[st
     """Read frame dictionaries and return validated arrays."""
     frames = []
     for path in sorted(Path(input_dir).glob("frame_*.npy")):
-        item = np.load(path, allow_pickle=True).item()
+        loaded = np.load(path, allow_pickle=True)
+        if loaded.shape != ():
+            raise ValueError(f"Invalid frame container: {path}")
+        item = loaded.item()
         if not isinstance(item, dict) or "radar_dbz" not in item:
             raise ValueError(f"Invalid synthetic frame: {path}")
-        frames.append({key: np.asarray(value, dtype=np.float32) for key, value in item.items()})
+        radar = np.asarray(item["radar_dbz"], dtype=np.float32)
+        if radar.ndim != 2 or radar.size == 0 or not np.isfinite(radar).all() or np.any((radar < -40) | (radar > 100)):
+            raise ValueError(f"Invalid radar_dbz data in {path}")
+        frame = {"radar_dbz": radar}
+        for key in ("ir_temp", "vil"):
+            if key in item:
+                values = np.asarray(item[key], dtype=np.float32)
+                limits = (150.0, 350.0) if key == "ir_temp" else (0.0, 500.0)
+                if values.shape != radar.shape or not np.isfinite(values).all() or np.any((values < limits[0]) | (values > limits[1])):
+                    raise ValueError(f"Invalid {key} data in {path}")
+                frame[key] = values
+        frames.append(frame)
     if not frames:
         raise FileNotFoundError(f"No frame_*.npy files found under {input_dir}")
     return frames
@@ -71,9 +92,13 @@ def load_mock_frames(input_dir: str | Path = DEFAULT_OUTPUT_DIR) -> list[dict[st
 
 def build_sevir_tensor(frames: list[dict[str, np.ndarray]]) -> np.ndarray:
     """Stack radar into [Batch, Time, Channel, Height, Width]."""
+    if not frames:
+        raise ValueError("At least one frame is required")
     radar = np.stack([frame["radar_dbz"] for frame in frames], axis=0)
-    if radar.ndim != 3:
-        raise ValueError("Each radar frame must be [Height, Width]")
+    if radar.ndim != 3 or radar.shape[1] == 0 or radar.shape[2] == 0 or not np.isfinite(radar).all():
+        raise ValueError("Frames must be finite, consistently shaped [Height, Width] radar arrays")
+    if np.any((radar < -40.0) | (radar > 100.0)):
+        raise ValueError("Radar values must be in the supported -40..100 dBZ range")
     return radar[None, :, None, :, :].astype(np.float32, copy=False)
 
 
