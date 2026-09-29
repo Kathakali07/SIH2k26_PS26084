@@ -52,8 +52,14 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(scenario.status_code, 200)
         self.assertEqual(live.status_code, 200)
         self.assertEqual(scenario.json()["mode"], "synthetic_demo")
-        self.assertEqual(scenario.json()["geojson"], live.json())
-        self.assertGreater(len(live.json()["features"]), 0)
+        scenario_data = scenario.json()
+        features = live.json()["features"]
+        self.assertEqual(len(scenario_data["storms"]), 4)
+        self.assertEqual(len(features), 4)
+        self.assertEqual(
+            {storm["id"] for storm in scenario_data["storms"]},
+            {feature["properties"]["id"] for feature in features},
+        )
         for feature in live.json()["features"]:
             self.assertEqual(feature["type"], "Feature")
             self.assertEqual(feature["geometry"]["type"], "Polygon")
@@ -61,11 +67,68 @@ class ApiTests(unittest.TestCase):
             self.assertEqual(ring[0], ring[-1])
             self.assertIn("eta_utc", feature["properties"])
 
+    def test_fixture_has_coherent_replay_and_complete_demo_products(self):
+        first = self.client.get("/api/scenario").json()
+        repeated = self.client.get("/api/scenario").json()
+        self.assertEqual(first, repeated)
+        self.assertEqual(len(first["replay"]["frames"]), 5)
+        self.assertEqual(len(first["forecast"]["forecast_members"]), 16)
+        self.assertAlmostEqual(sum(member["weight"] for member in first["forecast"]["forecast_members"]), 1.0)
+        self.assertEqual(len(first["forecast"]["lead_time_products"]), 3)
+        self.assertEqual(len(first["impacts"]), 6)
+        self.assertEqual(len(first["interactions"]), 2)
+        self.assertEqual(len(first["events"]), 2)
+        self.assertIn("timestamp_utc", first["events"][0])
+        self.assertEqual(
+            set(first["storms"][0]["hazards"]),
+            {"lightning", "hail", "downburst", "extreme_rain"},
+        )
+        required_indicators = {
+            "lightning_rate_flashes_min", "lightning_acceleration_flashes_min2",
+            "ir_temp_k", "ir_cooling_k_per_min", "cape_jkg", "shear_ms",
+            "dcape_jkg", "moisture_pct", "vil_kg_m2", "echo_top_km",
+        }
+        self.assertTrue(required_indicators.issubset(first["storms"][0]["indicators"]))
+        self.assertEqual(first["storms"][0]["sensor_reliability"]["radar"], 0.92)
+        self.assertIn("growth_rate_km2_per_5min", first["storms"][0])
+        self.assertEqual(first["sensors"]["satellite"]["status"], "unavailable")
+        self.assertEqual(first["storms"][0]["provenance"]["hazards"], "simulated")
+
+    def test_replay_frames_evolve_storms_and_include_events(self):
+        first = self.client.get("/api/scenario?frame_index=0").json()
+        last = self.client.get("/api/scenario?frame_index=4").json()
+        self.assertNotEqual(first["valid_time_utc"], last["valid_time_utc"])
+        frames = last["replay"]["frames"]
+        self.assertEqual([frame["frame_index"] for frame in frames], list(range(5)))
+        self.assertEqual(len({frame["valid_time_utc"] for frame in frames}), 5)
+        expected_ids = {storm["id"] for storm in frames[0]["storms"]}
+        self.assertEqual(len(expected_ids), 4)
+        for frame in frames:
+            self.assertEqual({storm["id"] for storm in frame["storms"]}, expected_ids)
+            self.assertTrue(all(event["timestamp_utc"] == frame["valid_time_utc"] for event in frame["events"]))
+            self.assertAlmostEqual(sum(member["weight"] for member in frame["forecast"]["forecast_members"]), 1.0)
+            for storm in frame["storms"]:
+                self.assertEqual(storm["geometry"]["type"], "Polygon")
+                ring = storm["geometry"]["coordinates"][0]
+                self.assertEqual(ring[0], ring[-1])
+                self.assertIn("speed_kmh", storm["motion"])
+                self.assertIn("severity", storm)
+        first_storm = next(storm for storm in first["storms"] if storm["id"] == "storm_17")
+        last_storm = next(storm for storm in last["storms"] if storm["id"] == "storm_17")
+        self.assertNotEqual(first_storm["position"], last_storm["position"])
+        self.assertGreater(last_storm["max_dbz"], first_storm["max_dbz"])
+        self.assertTrue(last["events"])
+        self.assertEqual(last["events"][0]["type"], "merge_risk")
+
     def test_radar_failure_expands_bounds_and_reset_restores(self):
         baseline = self.client.get("/api/nowcast/live").json()["features"][0]
         offline_response = self.client.post("/api/kill-radar")
         offline = self.client.get("/api/nowcast/live").json()["features"][0]
         self.assertFalse(offline_response.json()["radar_active"])
+        scenario_offline = self.client.get("/api/scenario").json()
+        self.assertEqual(scenario_offline["fallback"]["mode"], "simulated_fallback")
+        self.assertEqual(scenario_offline["forecast"]["skill_gate"]["display_level"], "probabilistic_hazard_zone")
+        self.assertAlmostEqual(sum(member["weight"] for member in scenario_offline["forecast"]["forecast_members"]), 1.0)
         baseline_ring = baseline["geometry"]["coordinates"][0]
         offline_ring = offline["geometry"]["coordinates"][0]
         baseline_width = max(point[0] for point in baseline_ring) - min(point[0] for point in baseline_ring)

@@ -16,10 +16,15 @@ The API listens on `http://localhost:8000`.
 ## API
 
 - `GET /api/health` — health and demo mode.
-- `GET /api/scenario` — scenario metadata, tracked storms, sensors, provenance, and embedded GeoJSON.
-- `GET /api/nowcast/live` — GeoJSON FeatureCollection for map rendering.
+- `GET /api/scenario` — canonical scenario metadata, current frame, five replay frames, storms, interactions, forecast products/members, hazard summary, sensor/observability status, impacts, events, alert preview, and provenance.
+- `GET /api/scenario?frame_index=0` — select a replay frame (`0`–`4`).
+- `GET /api/nowcast/live` — GeoJSON FeatureCollection for the current demo frame; also accepts `?frame_index=0`.
 - `POST /api/kill-radar` — set radar offline; no body is needed. To restore it directly, send `{"active": true}`.
 - `POST /api/reset-demo` — restore initial radar-online state.
+
+The UI scenario source of truth is `backend/scenario_fixture.py`. Storm IDs and frame timestamps are stable. The same selected frame is returned by `/api/scenario` and `/api/nowcast/live`. The fixture contains four evolving storm tracks, two interaction edges, three lead-time products, 16 weighted forecast members, the four hazard categories, impact targets, timestamped scenario events, and an alert preview. Forecast-member weights sum to 1.
+
+All fixture meteorological indicators and probabilities are **simulated**. Motion/growth fields are deterministic calculations from the scenario tracks. Satellite, lightning, and NWP are marked unavailable because no such live feeds are connected. The replay is a synthetic scenario replay, not verified historical replay.
 
 Radar fallback is simulated. No live satellite, lightning, or NWP feed is connected. The ETA is an illustrative demo estimate.
 
