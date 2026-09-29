@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+numpy
+opencv-python
+scipy
+pydantic
+# Install PyTorch with CUDA support separately via:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+torch
