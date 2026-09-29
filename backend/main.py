@@ -1,11 +1,21 @@
+"""FastAPI endpoints for the deterministic PRAMAAN-X demo scenario."""
+
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+from typing import Any
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import time
-from datetime import datetime, timedelta, timezone
-from engine import NowcastEngine
+from pydantic import BaseModel
 
-app = FastAPI(title="PRAMAAN-X Backend (Real Inference)")
+try:  # Support both `python backend/main.py` and `uvicorn main:app --app-dir backend`.
+    from .engine import NowcastEngine
+except ImportError:
+    from engine import NowcastEngine
 
+
+app = FastAPI(title="PRAMAAN-X Synthetic Demo API", version="0.2.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,112 +24,184 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+class RadarStateRequest(BaseModel):
+    active: bool = False
+
+
 class SystemState:
-    def __init__(self):
+    def __init__(self) -> None:
         self.radar_active = True
-        # Initialize the actual ML engine
         self.engine = NowcastEngine()
+
+    def reset(self) -> None:
+        self.radar_active = True
+
 
 state = SystemState()
 
-@app.post("/api/kill-radar")
-def kill_radar():
-    """
-    Task 2.2: Toggle sensor state and expand bounds.
-    """
-    state.radar_active = not state.radar_active
-    status_msg = "Radar Offline (IR Fallback Mode). Uncertainty bounds expanded 2.5x." if not state.radar_active else "Radar Online."
-    return {"radar_active": state.radar_active, "message": status_msg}
+
+def _iso_utc(value: datetime) -> str:
+    return value.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+
+
+def _eta_minutes(storm: dict[str, Any]) -> float:
+    u, v = storm["velocity"]
+    speed_px_per_frame = (u**2 + v**2) ** 0.5
+    if speed_px_per_frame <= 0:
+        return 60.0
+    # Illustrative demo estimate: 100 grid pixels at the observed frame motion.
+    return max(5.0, (100.0 / speed_px_per_frame) * state.engine.frame_interval_minutes)
+
+
+def _feature_for_storm(sid: int, storm: dict[str, Any], now: datetime) -> dict[str, Any] | None:
+    ring = storm["ring"]
+    if len(ring) < 4:
+        return None
+
+    center_lon, center_lat = storm["position"]
+    scale = 2.5 if not state.radar_active else 1.0
+    coordinates = [[
+        [center_lon + (lon - center_lon) * scale, center_lat + (lat - center_lat) * scale]
+        for lon, lat in ring
+    ]]
+
+    eta_minutes = _eta_minutes(storm)
+    interval_minutes = 15.0 if not state.radar_active else 5.0
+    eta = now + timedelta(minutes=eta_minutes)
+    eta_min = now + timedelta(minutes=max(0.0, eta_minutes - interval_minutes))
+    eta_max = now + timedelta(minutes=eta_minutes + interval_minutes)
+    u, v = storm["velocity"]
+    return {
+        "type": "Feature",
+        "geometry": {"type": "Polygon", "coordinates": coordinates},
+        "properties": {
+            "id": f"storm_cell_{sid}",
+            "hazard_type": storm["hazard_type"],
+            "severity": storm["severity"],
+            "eta_utc": _iso_utc(eta),
+            "eta_min_utc": _iso_utc(eta_min),
+            "eta_max_utc": _iso_utc(eta_max),
+            "eta_is_demo_estimate": True,
+            "max_dbz": float(storm["max_dbz"]),
+            "area_km2": float(storm["area_km2"]),
+            "velocity_u": float(u),
+            "velocity_v": float(v),
+            "centroid": {"lon": float(center_lon), "lat": float(center_lat)},
+            "bbox_px": list(storm["bbox"]),
+            "source_mode": "synthetic_demo",
+            "storm_data_provenance": "calculated_from_synthetic_frames",
+            "radar_active": state.radar_active,
+            "uncertainty_scale": scale,
+        },
+    }
+
+
+def _features(now: datetime | None = None) -> list[dict[str, Any]]:
+    timestamp = now or datetime.now(timezone.utc)
+    result = []
+    for sid, storm in sorted(state.engine.latest_storms.items()):
+        feature = _feature_for_storm(sid, storm, timestamp)
+        if feature is not None:
+            result.append(feature)
+    return result
+
+
+@app.get("/api/health")
+def get_health() -> dict[str, str]:
+    return {"status": "ok", "mode": "synthetic_demo"}
+
 
 @app.get("/api/nowcast/live")
-def get_live_data():
-    """
-    Task 2.1: Endpoint serving GeoJSON from local PyTorch inference.
-    """
-    # 1. Run local RTX 3050 Ti inference
-    # In production, we'd pass the path to the newest raw weather data sweep here.
-    prediction_tensor = state.engine.ingest_and_predict()
-    
-    # 2. Extract and match storm cells frame-over-frame
-    tracked_storms = state.engine.match_and_classify_cells(prediction_tensor)
-    
-    # 3. Format as RFC 7946 GeoJSON
-    features = []
-    
-    # Base timestamp (now) to compute eta_utc
-    now_utc = datetime.now(timezone.utc)
-    
-    for sid, storm in tracked_storms.items():
-        # Polygon geometry from engine
-        # We need to map the image (x, y) coordinates to Lat/Lon
-        # Origin is Kolkata: 22.5726 N, 88.3639 E
-        cx, cy = storm['centroid']
-        u, v = storm['velocity']
-        
-        # Calculate ETA based on velocity magnitude
-        # We assume 1 frame = 5 minutes. If velocity is high, it hits sooner.
-        # This is a simplification for the hackathon prototype countdown logic.
-        speed_px_per_frame = (u**2 + v**2)**0.5
-        if speed_px_per_frame > 0:
-            # Random mock logic: time to hit a fixed distance / speed
-            frames_to_impact = 100.0 / speed_px_per_frame
-            eta = now_utc + timedelta(minutes=(frames_to_impact * 5))
-        else:
-            eta = now_utc + timedelta(minutes=60) # default
-            
-        eta_str = eta.strftime("%Y-%m-%dT%H:%M:%SZ")
-        
-        # Map pixel contours to lat/lon using calibration (approximate for demo)
-        geo_polygon = []
-        for point in storm['contour']:
-            # contour points are [[x, y]]
-            px = point[0][0]
-            py = point[0][1]
-            
-            lon = state.engine.origin_lon + (px * state.engine.deg_per_pixel_lon)
-            lat = state.engine.origin_lat + (py * state.engine.deg_per_pixel_lat)
-            geo_polygon.append([lon, lat])
-            
-        # GeoJSON strictly requires the first and last points to be identical
-        if len(geo_polygon) > 0 and geo_polygon[0] != geo_polygon[-1]:
-            geo_polygon.append(geo_polygon[0])
-            
-        # Apply uncertainty inflation if radar is dead (Task 2.2)
-        if not state.radar_active and len(geo_polygon) > 0:
-            # We scale the polygon outward from its centroid by 2.5x (approx 1.58 radius)
-            c_lon = state.engine.origin_lon + (cx * state.engine.deg_per_pixel_lon)
-            c_lat = state.engine.origin_lat + (cy * state.engine.deg_per_pixel_lat)
-            inflated_polygon = []
-            for p in geo_polygon:
-                new_lon = c_lon + (p[0] - c_lon) * 2.5
-                new_lat = c_lat + (p[1] - c_lat) * 2.5
-                inflated_polygon.append([new_lon, new_lat])
-            geo_polygon = inflated_polygon
-            
-        if len(geo_polygon) >= 4: # Valid polygon needs at least 4 points (triangle + closed)
-            features.append({
-                "type": "Feature",
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [geo_polygon]
-                },
-                "properties": {
-                    "id": f"storm_cell_{sid}",
-                    "hazard_type": storm["hazard_type"],
-                    "severity": storm["severity"],
-                    "eta_utc": eta_str,
-                    "max_dbz": float(storm["max_dbz"]),
-                    "area_km2": float(storm["area_km2"]),
-                    "velocity_u": float(u),
-                    "velocity_v": float(v)
-                }
-            })
-            
+def get_live_data() -> dict[str, Any]:
+    """Return the latest tracked storms as an RFC 7946 GeoJSON FeatureCollection."""
+    return {"type": "FeatureCollection", "features": _features()}
+
+
+@app.get("/api/scenario")
+def get_scenario() -> dict[str, Any]:
+    now = datetime.now(timezone.utc)
+    feature_collection = {"type": "FeatureCollection", "features": _features(now)}
+    storms = []
+    for feature in feature_collection["features"]:
+        properties = feature["properties"]
+        storms.append({
+            "id": properties["id"],
+            "geometry": feature["geometry"],
+            "position": properties["centroid"],
+            "area_km2": properties["area_km2"],
+            "max_dbz": properties["max_dbz"],
+            "motion": {
+                "u": properties["velocity_u"],
+                "v": properties["velocity_v"],
+                "speed_px_per_frame": float((properties["velocity_u"]**2 + properties["velocity_v"]**2) ** 0.5),
+            },
+            "hazard_type": properties["hazard_type"],
+            "severity": properties["severity"],
+            "eta_utc": properties["eta_utc"],
+            "eta_min_utc": properties["eta_min_utc"],
+            "eta_max_utc": properties["eta_max_utc"],
+            "provenance": {
+                "geometry": "calculated_from_synthetic_radar",
+                "max_dbz": "synthetic_input",
+                "motion": "calculated_from_synthetic_frames",
+                "hazard_type": "calculated_threshold_demo",
+                "eta": "simulated_demo_estimate",
+            },
+        })
+
     return {
-        "type": "FeatureCollection",
-        "features": features
+        "scenario_id": "kolkata_demo_01",
+        "scenario_name": "PRAMAAN-X Synthetic Storm Tracking Demo",
+        "mode": "synthetic_demo",
+        "valid_time_utc": _iso_utc(now),
+        "frame_count": len(state.engine.frames),
+        "frame_interval_minutes": state.engine.frame_interval_minutes,
+        "grid": {
+            "height": int(state.engine.input_tensor.shape[-2]),
+            "width": int(state.engine.input_tensor.shape[-1]),
+            "km_per_pixel": state.engine.km_per_pixel,
+            "origin": {"lon": state.engine.origin_lon, "lat": state.engine.origin_lat},
+        },
+        "data_sources": [{"name": state.engine.source, "status": "synthetic_demo"}],
+        "sensors": {
+            "radar": {"available": state.radar_active, "reliability": 0.9 if state.radar_active else 0.0, "age_seconds": 0, "provenance": "simulated"},
+            "satellite": {"available": False, "reliability": None, "age_seconds": None, "provenance": "unavailable"},
+            "lightning": {"available": False, "reliability": None, "age_seconds": None, "provenance": "unavailable"},
+            "nwp": {"available": False, "reliability": None, "age_seconds": None, "provenance": "unavailable"},
+        },
+        "fallback": {
+            "active": not state.radar_active,
+            "mode": "simulated_fallback" if not state.radar_active else None,
+            "message": "Radar unavailable; fallback behavior is simulated. No alternate live feed is connected." if not state.radar_active else None,
+        },
+        "uncertainty_scale": 2.5 if not state.radar_active else 1.0,
+        "storms": storms,
+        "geojson": feature_collection,
+        "model": {"name": "deterministic demo tracking", "earthformer_inference": False},
     }
+
+
+@app.post("/api/kill-radar")
+def set_radar_state(request: RadarStateRequest | None = None) -> dict[str, Any]:
+    """Set radar unavailable (default) or restore it with `{\"active\": true}`."""
+    state.radar_active = bool(request.active) if request is not None else False
+    return {
+        "radar_active": state.radar_active,
+        "fallback_active": not state.radar_active,
+        "fallback_mode": "simulated_fallback" if not state.radar_active else None,
+        "uncertainty_scale": 1.0 if state.radar_active else 2.5,
+        "message": "Radar online." if state.radar_active else "Radar offline; fallback behavior simulated and uncertainty expanded.",
+    }
+
+
+@app.post("/api/reset-demo")
+def reset_demo() -> dict[str, Any]:
+    state.reset()
+    return {"radar_active": True, "mode": "synthetic_demo", "message": "Demo state reset."}
+
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
