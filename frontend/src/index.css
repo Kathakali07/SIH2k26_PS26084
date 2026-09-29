@@ -1,15 +1,46 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand: #3b82f6;
+  --color-panel: #111622;
+  --color-panel-border: #1f2937;
+  --color-app-bg: #070b14;
+}
+
+body {
+  background-color: var(--color-app-bg);
+  color: #e2e8f0;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
+  height: 4px;
 }
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #555;
+  background: #334155;
   border-radius: 4px;
 }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* ─── Dark map tiles via CSS filter ─── */
+.dark-tiles {
+  filter: invert(1) hue-rotate(200deg) brightness(0.7) contrast(1.1) saturate(0.3);
+}
+
+/* Make sure heatmap circles and markers are NOT inverted */
+.leaflet-overlay-pane,
+.leaflet-marker-pane,
+.leaflet-tooltip-pane,
+.leaflet-popup-pane,
+.leaflet-shadow-pane {
+  filter: none !important;
+}
+
 .map-tooltip {
   background: transparent !important;
   border: none !important;
@@ -17,3 +48,28 @@
   text-shadow: 1px 1px 2px black;
   font-weight: 600;
 }
+
+/* Hide leaflet controls we don't want */
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Custom leaflet tooltip for storm data */
+.custom-tooltip {
+  background: rgba(10, 13, 20, 0.95) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(59, 130, 246, 0.1) !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 12px !important;
+  color: #d1d5db !important;
+  backdrop-filter: blur(8px) !important;
+}
+.custom-tooltip::before {
+  border-right-color: rgba(10, 13, 20, 0.95) !important;
+}
+.leaflet-tooltip-top.custom-tooltip::before {
+  border-top-color: rgba(10, 13, 20, 0.95) !important;
+}
+

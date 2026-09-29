@@ -1,37 +1,37 @@
-// src/data/mockThreats.js
+// src/data/mockThreats.js - Swiss Alpine Convective Threat Objects
 export const MOCK_THREATS = [
   {
-    id: "CB-401",
-    type: "CLOUDBURST",
-    severity: "Extreme",
-    location: "Barrackpore Sector",
+    id: "storm_01",
+    type: "SEVERE SUPERCELL & CLOUDBURST",
+    severity: "HIGH",
+    location: "Gotthard Pass & Uri Alpine Corridor",
     coordinates: [
-      [22.76, 88.35],
-      [22.78, 88.39],
-      [22.74, 88.41],
-      [22.72, 88.36]
+      [46.75, 8.60],
+      [46.85, 8.75],
+      [46.65, 8.72],
+      [46.60, 8.55]
     ],
-    dbz: 58,
+    dbz: 74.0,
     lightningDensity: "42 strikes/min",
-    downburstVelocity: "78 km/h",
-    hailProb: "85%",
-    etaSeconds: 1540 // ~25 minutes
+    downburstVelocity: "98 km/h",
+    hailProb: "88%",
+    etaSeconds: 900 // ~15 minutes
   },
   {
-    id: "TS-108",
-    type: "SEVERE THUNDERSTORM",
-    severity: "High",
-    location: "Howrah Corridor",
+    id: "storm_02",
+    type: "MULTICELL HAILSTORM",
+    severity: "MODERATE",
+    location: "Lake Lucerne & Schwyz Basin",
     coordinates: [
-      [22.58, 88.26],
-      [22.61, 88.31],
-      [22.56, 88.34],
-      [22.54, 88.28]
+      [46.70, 7.72],
+      [46.80, 7.85],
+      [46.62, 7.82],
+      [46.58, 7.68]
     ],
-    dbz: 46,
-    lightningDensity: "18 strikes/min",
-    downburstVelocity: "52 km/h",
-    hailProb: "35%",
-    etaSeconds: 4320 // ~72 minutes
+    dbz: 68.0,
+    lightningDensity: "24 strikes/min",
+    downburstVelocity: "75 km/h",
+    hailProb: "72%",
+    etaSeconds: 1800 // ~30 minutes
   }
 ];
