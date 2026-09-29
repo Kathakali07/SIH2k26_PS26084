@@ -1,89 +1,84 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
 import Header from './components/Header';
-import LocationList from './components/LocationList';
-import WindCharts from './components/WindCharts';
-import WeatherMap from './components/WeatherMap';
-import TemperatureChart from './components/TemperatureChart';
+import Sidebar from './components/Sidebar';
+import MainMap from './components/MainMap';
+import RightSidebar from './components/RightSidebar';
+import BottomPanel from './components/BottomPanel';
+
+// Views
+import LandingPage from './components/views/LandingPage';
+import StormObjectDetail from './components/views/StormObjectDetail';
+import HazardForecast from './components/views/HazardForecast';
+import ImpactRisk from './components/views/ImpactRisk';
+import StormInteractions from './components/views/StormInteractions';
+import MultipleFutures from './components/views/MultipleFutures';
+import HistoricalReplay from './components/views/HistoricalReplay';
+import DataSensors from './components/views/DataSensors';
+import Alerts from './components/views/Alerts';
+import SettingsView from './components/views/SettingsView';
 
 export default function App() {
-  const [activeMapLayer, setActiveMapLayer] = useState('temperature');
-  const [isMapEnlarged, setIsMapEnlarged] = useState(false);
+  const [activeTab, setActiveTab] = useState('Landing Page');
+  const [settingsTab, setSettingsTab] = useState('General');
+
+  if (activeTab === 'Landing Page') {
+    return <LandingPage onEnterApp={() => setActiveTab('Live Nowcast')} />;
+  }
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Live Nowcast':
+        return (
+          <div className="flex-1 flex gap-3 overflow-hidden min-h-0">
+            <div className="flex-1 flex flex-col gap-3 overflow-hidden min-h-0">
+              <div className="flex-[3] relative rounded-xl overflow-hidden border border-gray-800/60 shadow-lg shadow-black/20">
+                 <MainMap />
+              </div>
+              <div className="flex-[1.2] flex gap-3 overflow-hidden min-h-0 shrink-0">
+                 <BottomPanel />
+              </div>
+            </div>
+            <div className="w-[320px] flex-shrink-0 flex flex-col gap-3 overflow-hidden min-h-0">
+               <RightSidebar />
+            </div>
+          </div>
+        );
+      case 'Storm Objects':
+        return <StormObjectDetail />;
+      case 'Hazard Forecast':
+        return <HazardForecast />;
+      case 'Impact Risk':
+        return <ImpactRisk />;
+      case 'Storm Interactions':
+        return <StormInteractions />;
+      case 'Multiple Futures':
+        return <MultipleFutures />;
+      case 'Historical Replay':
+        return <HistoricalReplay />;
+      case 'Data & Sensors':
+        return <DataSensors />;
+      case 'Alerts':
+        return <Alerts />;
+      case 'Settings':
+        return <SettingsView activeTab={settingsTab} setActiveTab={setSettingsTab} />;
+      default:
+        return (
+          <div className="flex-1 flex items-center justify-center text-gray-500">
+            {activeTab} - Coming Soon
+          </div>
+        );
+    }
+  };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      transition={{ duration: 0.8 }}
-      className="h-screen w-screen bg-[#1e1e1e] text-gray-300 flex flex-col font-sans overflow-hidden"
-    >
-      <Header 
-        activeMapLayer={activeMapLayer} 
-        setActiveMapLayer={setActiveMapLayer}
-        isMapEnlarged={isMapEnlarged}
-        onToggleMapEnlarge={() => setIsMapEnlarged(!isMapEnlarged)}
-      />
-      <div className="flex-1 p-3 flex gap-4 overflow-hidden relative">
-        {/* Left Column */}
-        <motion.div 
-          initial={{ x: -50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
-          className={`w-[480px] flex-shrink-0 flex flex-col overflow-hidden transition-opacity duration-300 ${isMapEnlarged ? 'opacity-0 pointer-events-none absolute' : 'opacity-100'}`}
-        >
-          <LocationList />
-        </motion.div>
-        
-        {/* Middle and Right Columns Container */}
-        <div className={`flex-1 flex flex-col gap-4 overflow-hidden transition-all duration-300 ${isMapEnlarged ? 'w-full ml-[496px]' : ''}`}>
-          {/* Top Half: Wind and Map */}
-          <div className={`flex gap-4 min-h-0 transition-all duration-300 ${isMapEnlarged ? 'flex-1' : 'flex-[55]'}`}>
-            {/* Middle Column: Wind Charts */}
-            <motion.div 
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.4, type: "spring", stiffness: 200, damping: 20 }}
-              className={`w-[45%] flex flex-col gap-4 transition-opacity duration-300 ${isMapEnlarged ? 'opacity-0 pointer-events-none hidden' : ''}`}
-            >
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <WindCharts type="direction" />
-              </div>
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <WindCharts type="speed" />
-              </div>
-            </motion.div>
-            
-            {/* Right Column: Weather Map */}
-            {/* We use a wrapper to preserve flex layout when not enlarged, 
-                and switch to 'fixed inset-0' to cover the exact full screen ratio when enlarged */}
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.6, type: "spring", stiffness: 200, damping: 20 }}
-              className={`overflow-hidden border border-gray-600 rounded-sm bg-[#222] transition-all duration-300 ease-in-out ${isMapEnlarged ? 'fixed inset-0 z-[9999] w-screen h-screen' : 'relative flex-1'}`}
-            >
-              <WeatherMap 
-                activeMapLayer={activeMapLayer} 
-                isMapEnlarged={isMapEnlarged}
-                onToggleMapEnlarge={() => setIsMapEnlarged(!isMapEnlarged)}
-              />
-            </motion.div>
-          </div>
-          
-          {/* Bottom Half: Temperature Bar Chart */}
-          <motion.div 
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.8, type: "spring", stiffness: 200, damping: 20 }}
-            className={`flex-[45] flex-shrink-0 flex flex-col overflow-hidden transition-opacity duration-300 ${isMapEnlarged ? 'hidden opacity-0 pointer-events-none' : ''}`}
-          >
-             <TemperatureChart 
-               activeMapLayer={activeMapLayer}
-               setActiveMapLayer={setActiveMapLayer}
-             />
-          </motion.div>
+    <div className="h-screen w-screen bg-[#070b14] text-gray-300 flex flex-col font-sans overflow-hidden select-none">
+      <Header setActiveTab={setActiveTab} setSettingsTab={setSettingsTab} />
+      <div className="flex-1 flex overflow-hidden p-3 gap-3 min-h-0">
+        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+        <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
+          {renderContent()}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
