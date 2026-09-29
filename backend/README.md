@@ -51,7 +51,10 @@ Example `GET /api/nowcast/live` response shape (coordinates abbreviated):
   "features": [
     {
       "type": "Feature",
-      "geometry": { "type": "Polygon", "coordinates": [[[88.3, 22.4], "...", [88.3, 22.4]]] },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[88.31, 22.46], [88.32, 22.45], [88.33, 22.46], [88.32, 22.47], [88.31, 22.46]]]
+      },
       "properties": {
         "id": "storm_17",
         "hazard_type": "Thunderstorm",

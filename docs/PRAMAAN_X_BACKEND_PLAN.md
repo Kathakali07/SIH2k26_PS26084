@@ -165,6 +165,8 @@ Backend B5: from a clean process, run the backend and verify GET /api/scenario, 
 
 **Final backend handoff:** Start command, local base URL, routes, schema/sample response, chosen data mode/source, radar-off semantics, checks run, known limitations.
 
+**Status: Implemented and smoke-tested.** The documented `python backend/main.py` command was started in a clean process and `/api/health`, `/api/scenario`, `/api/nowcast/live`, radar-off, and reset were exercised over HTTP. Automated checks cover response consistency, coordinate bounds/order and ring closure, validation errors, radar state, reset, and empty FeatureCollection generation. The frontend-facing run/API/schema/sample/provenance/limitations handoff is in `docs/PRAMAAN_X_BACKEND_HANDOFF.md`.
+
 ## Backend priority if time slips
 
 1. App/backend starts.
