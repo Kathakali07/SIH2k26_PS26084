@@ -1,7 +1,7 @@
 """Focused checks for the synthetic PRAMAAN-X backend demo."""
 
 import unittest
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from backend.engine import DEMO_BASE_TIME, NowcastEngine
 from backend.generate_mock import build_sevir_tensor, generate_mock_data, load_mock_frames
-from backend.main import app, state
+from backend.main import _feature_collection, app, state
 
 
 class MockDataTests(unittest.TestCase):
@@ -91,6 +91,26 @@ class MockDataTests(unittest.TestCase):
         self.assertEqual(latest["last_seen_frame"], 1)
         self.assertNotEqual(latest["velocity"], (0.0, 0.0))
 
+    def test_same_raster_sequence_produces_repeatable_tracks(self):
+        first = NowcastEngine()
+        second = NowcastEngine()
+
+        def signature(engine):
+            return {
+                track_id: (
+                    track["first_seen_frame"],
+                    track["last_seen_frame"],
+                    track["centroid"],
+                    track["velocity"],
+                    track["area_km2"],
+                    track["max_dbz"],
+                    track["hazard_type"],
+                )
+                for track_id, track in engine.tracks.items()
+            }
+
+        self.assertEqual(signature(first), signature(second))
+
     def test_small_high_intensity_cell_is_cloudburst(self):
         engine = NowcastEngine(km_per_pixel=0.5)
         cell = {"area_km2": 15.0, "max_dbz": 60.0}
@@ -141,6 +161,8 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(scenario.json()["mode"], "synthetic_demo")
         scenario_data = scenario.json()
         features = live.json()["features"]
+        self.assertEqual(scenario_data["geojson"], live.json())
+        self.assertTrue(scenario_data["radar_active"])
         self.assertEqual(len(scenario_data["storms"]), 4)
         self.assertEqual(len(features), 4)
         self.assertEqual(
@@ -153,6 +175,14 @@ class ApiTests(unittest.TestCase):
             ring = feature["geometry"]["coordinates"][0]
             self.assertEqual(ring[0], ring[-1])
             self.assertIn("eta_utc", feature["properties"])
+            self.assertTrue(all(68.7 <= lon <= 97.2 and 8.4 <= lat <= 37.6 for lon, lat in ring))
+            scenario_storm = next(storm for storm in scenario_data["storms"] if storm["id"] == feature["properties"]["id"])
+            for property_name in ("valid_time_utc", "eta_utc", "eta_min_utc", "eta_max_utc", "radar_active", "uncertainty_scale"):
+                self.assertEqual(scenario_storm[property_name], feature["properties"][property_name])
+
+    def test_empty_scenario_returns_valid_empty_geojson(self):
+        collection = _feature_collection({"valid_time_utc": "2026-09-29T12:00:00Z", "storms": []})
+        self.assertEqual(collection, {"type": "FeatureCollection", "features": []})
 
     def test_fixture_has_coherent_replay_and_complete_demo_products(self):
         first = self.client.get("/api/scenario").json()
@@ -208,11 +238,16 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(last["events"][0]["type"], "merge_risk")
 
     def test_radar_failure_expands_bounds_and_reset_restores(self):
-        baseline = self.client.get("/api/nowcast/live").json()["features"][0]
+        baseline_collection = self.client.get("/api/nowcast/live").json()
+        baseline = baseline_collection["features"][0]
         offline_response = self.client.post("/api/kill-radar")
-        offline = self.client.get("/api/nowcast/live").json()["features"][0]
+        offline_collection = self.client.get("/api/nowcast/live").json()
+        offline = offline_collection["features"][0]
+        self.assertEqual(self.client.get("/api/scenario").json()["geojson"], offline_collection)
         self.assertFalse(offline_response.json()["radar_active"])
         scenario_offline = self.client.get("/api/scenario").json()
+        self.assertFalse(scenario_offline["sensors"]["radar"]["available"])
+        self.assertEqual(scenario_offline["uncertainty_scale"], 2.5)
         self.assertEqual(scenario_offline["fallback"]["mode"], "simulated_fallback")
         self.assertEqual(scenario_offline["forecast"]["skill_gate"]["display_level"], "probabilistic_hazard_zone")
         self.assertAlmostEqual(sum(member["weight"] for member in scenario_offline["forecast"]["forecast_members"]), 1.0)
@@ -221,9 +256,36 @@ class ApiTests(unittest.TestCase):
         baseline_width = max(point[0] for point in baseline_ring) - min(point[0] for point in baseline_ring)
         offline_width = max(point[0] for point in offline_ring) - min(point[0] for point in offline_ring)
         self.assertAlmostEqual(offline_width / baseline_width, 2.5, places=5)
+        base_props = baseline["properties"]
+        offline_props = offline["properties"]
+        base_interval = (
+            datetime.fromisoformat(base_props["eta_max_utc"].replace("Z", "+00:00"))
+            - datetime.fromisoformat(base_props["eta_min_utc"].replace("Z", "+00:00"))
+        )
+        offline_interval = (
+            datetime.fromisoformat(offline_props["eta_max_utc"].replace("Z", "+00:00"))
+            - datetime.fromisoformat(offline_props["eta_min_utc"].replace("Z", "+00:00"))
+        )
+        self.assertGreater(offline_interval, base_interval)
+        online_again = self.client.post("/api/kill-radar", json={"active": True})
+        self.assertTrue(online_again.json()["radar_active"])
+        self.client.post("/api/kill-radar")
         self.client.post("/api/reset-demo")
         restored = self.client.get("/api/nowcast/live").json()["features"][0]
         self.assertEqual(restored["geometry"], baseline["geometry"])
+
+    def test_api_validation_and_local_cors(self):
+        self.assertEqual(self.client.get("/api/scenario?frame_index=99").status_code, 422)
+        self.assertEqual(self.client.post("/api/kill-radar", json={"active": "sometimes"}).status_code, 422)
+        response = self.client.options(
+            "/api/scenario",
+            headers={
+                "Origin": "http://localhost:5173",
+                "Access-Control-Request-Method": "GET",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["access-control-allow-origin"], "http://localhost:5173")
 
 
 if __name__ == "__main__":

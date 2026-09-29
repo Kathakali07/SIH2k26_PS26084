@@ -18,8 +18,8 @@ except ImportError:  # Support `python backend/main.py` and uvicorn app-dir mode
 app = FastAPI(title="PRAMAAN-X Synthetic Demo API", version="0.3.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -87,7 +87,45 @@ def _feature_from_storm(storm: dict[str, Any], valid_time: str) -> dict[str, Any
 
 
 def _scenario(frame_index: int) -> dict[str, Any]:
-    return build_scenario(frame_index=frame_index, radar_active=state.radar_active)
+    scenario = build_scenario(frame_index=frame_index, radar_active=state.radar_active)
+    geojson = {
+        "type": "FeatureCollection",
+        "features": [
+            _feature_from_storm(storm, scenario["valid_time_utc"])
+            for storm in scenario["storms"]
+        ],
+    }
+    feature_by_id = {feature["properties"]["id"]: feature for feature in geojson["features"]}
+    uncertainty_scale = 1.0 if state.radar_active else 2.5
+    for storm in scenario["storms"]:
+        feature = feature_by_id[storm["id"]]
+        storm["radar_active"] = state.radar_active
+        storm["uncertainty_scale"] = uncertainty_scale
+        storm["uncertainty_geometry"] = feature["geometry"]
+        storm.update({
+            key: value
+            for key, value in feature["properties"].items()
+            if key not in {"id", "name", "hazard_type", "severity", "max_dbz", "area_km2", "motion", "lifecycle", "growth_rate_km2_per_5min", "hazards", "indicators", "sensor_reliability", "provenance"}
+        })
+    scenario["radar_active"] = state.radar_active
+    scenario["uncertainty_scale"] = uncertainty_scale
+    scenario["geojson"] = geojson
+    scenario["current"]["storms"] = scenario["storms"]
+    scenario["current"]["geojson"] = geojson
+    scenario["current"]["radar_active"] = state.radar_active
+    scenario["current"]["uncertainty_scale"] = uncertainty_scale
+    return scenario
+
+
+def _feature_collection(scenario: dict[str, Any]) -> dict[str, Any]:
+    """Build a valid empty-or-populated GeoJSON collection from scenario state."""
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            _feature_from_storm(storm, scenario["valid_time_utc"])
+            for storm in scenario.get("storms", [])
+        ],
+    }
 
 
 @app.get("/api/health")
@@ -101,10 +139,7 @@ def get_live_data(
 ) -> dict[str, Any]:
     """Return the selected fixture frame as an RFC 7946 FeatureCollection."""
     scenario = _scenario(frame_index)
-    return {
-        "type": "FeatureCollection",
-        "features": [_feature_from_storm(storm, scenario["valid_time_utc"]) for storm in scenario["storms"]],
-    }
+    return _feature_collection(scenario)
 
 
 @app.get("/api/scenario")
@@ -112,7 +147,10 @@ def get_scenario(
     frame_index: int = Query(default=FRAME_COUNT - 1, ge=0, lt=FRAME_COUNT),
 ) -> dict[str, Any]:
     """Return canonical scenario state and all timestamped replay frames."""
-    return _scenario(frame_index)
+    scenario = _scenario(frame_index)
+    scenario["geojson"] = _feature_collection(scenario)
+    scenario["current"]["geojson"] = scenario["geojson"]
+    return scenario
 
 
 @app.post("/api/kill-radar")

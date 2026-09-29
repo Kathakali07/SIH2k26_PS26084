@@ -22,7 +22,52 @@ The API listens on `http://localhost:8000`.
 - `POST /api/kill-radar` — set radar offline; no body is needed. To restore it directly, send `{"active": true}`.
 - `POST /api/reset-demo` — restore initial radar-online state.
 
-The UI scenario source of truth is `backend/scenario_fixture.py`. Storm IDs and frame timestamps are stable. The same selected frame is returned by `/api/scenario` and `/api/nowcast/live`. The fixture contains four evolving storm tracks, two interaction edges, three lead-time products, 16 weighted forecast members, the four hazard categories, impact targets, timestamped scenario events, and an alert preview. Forecast-member weights sum to 1.
+## API smoke test
+
+```bash
+curl http://localhost:8000/api/health
+curl "http://localhost:8000/api/scenario?frame_index=0"
+curl "http://localhost:8000/api/nowcast/live?frame_index=0"
+curl -X POST http://localhost:8000/api/kill-radar
+curl http://localhost:8000/api/scenario
+curl -X POST http://localhost:8000/api/reset-demo
+```
+
+To explicitly restore radar through the state endpoint instead of reset:
+
+```bash
+curl -X POST http://localhost:8000/api/kill-radar \
+  -H "Content-Type: application/json" \
+  -d '{"active": true}'
+```
+
+The UI scenario source of truth is `backend/scenario_fixture.py`. Storm IDs and frame timestamps are stable. `/api/scenario` embeds the exact FeatureCollection returned by `/api/nowcast/live` for the selected frame, including matching IDs, valid time, ETA bounds, radar state, and uncertainty scale. The fixture contains four evolving storm tracks, two interaction edges, three lead-time products, 16 weighted forecast members, the four hazard categories, impact targets, timestamped scenario events, and an alert preview. Forecast-member weights sum to 1. Local frontend CORS is enabled for Vite at `localhost:5173` and `127.0.0.1:5173`.
+
+Example `GET /api/nowcast/live` response shape (coordinates abbreviated):
+
+```json
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Polygon", "coordinates": [[[88.3, 22.4], "...", [88.3, 22.4]]] },
+      "properties": {
+        "id": "storm_17",
+        "hazard_type": "Thunderstorm",
+        "severity": "HIGH",
+        "valid_time_utc": "2026-09-29T12:20:00Z",
+        "eta_utc": "2026-09-29T12:40:00Z",
+        "eta_min_utc": "2026-09-29T12:28:00Z",
+        "eta_max_utc": "2026-09-29T12:52:00Z",
+        "radar_active": true,
+        "uncertainty_scale": 1.0,
+        "provenance": { "hazards": "simulated" }
+      }
+    }
+  ]
+}
+```
 
 All fixture meteorological indicators and probabilities are **simulated**. Motion/growth fields are deterministic calculations from the scenario tracks. Satellite, lightning, and NWP are marked unavailable because no such live feeds are connected. The replay is a synthetic scenario replay, not verified historical replay.
 

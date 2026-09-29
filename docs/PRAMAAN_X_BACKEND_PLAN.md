@@ -143,6 +143,8 @@ Backend B4: implement the minimal FastAPI routes around the shared deterministic
 
 **Acceptance:** All endpoints agree; radar-off and reset work repeatedly without process restart.
 
+**Status: Implemented.** `/api/scenario` embeds the same GeoJSON FeatureCollection returned by `/api/nowcast/live` for the selected `frame_index`; storm IDs, valid time, ETA properties, radar state, and uncertainty scale are consistent. Radar failure is idempotent, widens polygon bounds and ETA intervals, downgrades the near-term product, and reports the alternate-sensor fallback as simulated. Reset restores the baseline. Local Vite CORS, FastAPI validation responses, and curl examples are documented in `backend/README.md`.
+
 ## B5 — Backend verification and frontend handoff (30 minutes)
 
 **Verify:**
