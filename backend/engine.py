@@ -13,12 +13,87 @@ import re
 import cv2
 import numpy as np
 from scipy.optimize import linear_sum_assignment
-
+import os
+import torch
+import torch.nn as nn
 
 DEFAULT_FRAMES_DIR = Path(__file__).resolve().parent.parent / "data" / "mock_frames"
 DEMO_BASE_TIME = datetime(2026, 9, 29, 12, 0, tzinfo=timezone.utc)
 MIN_DBZ = -40.0
 MAX_DBZ = 100.0
+
+
+class DGMRInferenceEngine:
+    """Wrapper for DeepMind's Deep Generative Model of Radar (DGMR)."""
+    
+    def __init__(self, device: str = "cuda" if torch.cuda.is_available() else "cpu"):
+        self.device = device
+        print(f"Initializing DGMR on device: {self.device}")
+        try:
+            from dgmr import DGMR
+            print("Loading pretrained DGMR weights from openclimatefix/dgmr...")
+            # This automatically downloads the weights from Hugging Face if not cached.
+            self.model = DGMR.from_pretrained("openclimatefix/dgmr").to(self.device)
+            self.model.eval()
+            self.is_loaded = True
+        except ImportError:
+            print("WARNING: 'dgmr' library not found. Install it via pip/git to use real inference.")
+            self.is_loaded = False
+            
+    def predict(self, context_tensor: np.ndarray) -> np.ndarray:
+        """
+        Runs the forward pass through DGMR.
+        DGMR expects [Batch, Time, Channels, Height, Width].
+        Our context_tensor is [1, 20, 1, 500, 500].
+        """
+        if not self.is_loaded:
+            raise RuntimeError("DGMR library is not installed. Cannot run real inference.")
+            
+        tensor_pt = torch.tensor(context_tensor, dtype=torch.float32, device=self.device)
+        
+        # DGMR usually takes 4 frames of context
+        tensor_context = tensor_pt[:, -4:, :, :, :]
+        
+        # Crop to 256x256 to match typical DGMR constraints (must be powers of 2)
+        # We'll take the center 256x256
+        H, W = tensor_context.shape[3], tensor_context.shape[4]
+        h_start = (H - 256) // 2
+        w_start = (W - 256) // 2
+        tensor_context = tensor_context[:, :, :, h_start:h_start+256, w_start:w_start+256]
+        
+        with torch.no_grad():
+            prediction = self.model(tensor_context)
+            
+        # prediction is [Batch, Future_Time, Channels, H, W]
+        # Pad it back to 500x500 so our tracker doesn't get confused
+        padded_prediction = torch.zeros(
+            (prediction.shape[0], prediction.shape[1], prediction.shape[2], H, W),
+            dtype=prediction.dtype, device=prediction.device
+        )
+        padded_prediction[:, :, :, h_start:h_start+256, w_start:w_start+256] = prediction
+        # Convert to numpy
+        prediction_np = padded_prediction.cpu().numpy()
+        prediction_np = np.nan_to_num(prediction_np, nan=0.0)
+        
+        # DGMR outputs rain rate in mm/hr (typically 0.0 to ~3.0).
+        # Convert to dBZ using the standard Marshall-Palmer Z-R relationship:
+        #   Z = 200 * R^1.6   (Z in mm^6/m^3, R in mm/hr)
+        #   dBZ = 10 * log10(Z)
+        # Example: R=0.5 mm/hr → Z=76 → dBZ=18.8  (light rain)
+        #          R=1.0 mm/hr → Z=200 → dBZ=23.0  (moderate rain)
+        #          R=2.0 mm/hr → Z=607 → dBZ=27.8  (heavy rain)
+        #          R=3.0 mm/hr → Z=1149 → dBZ=30.6 (intense rain)
+        rain_rate = np.clip(prediction_np, 0.0, None)  # No negative rain
+        Z = 200.0 * np.power(rain_rate + 1e-6, 1.6)    # Marshall-Palmer
+        dbz = 10.0 * np.log10(Z + 1e-10)               # Convert to dBZ
+        
+        # Where rain rate was ~0, set to no-echo
+        dbz[rain_rate < 0.01] = -40.0
+        
+        dbz = np.clip(dbz, MIN_DBZ, MAX_DBZ)
+        
+        return dbz
+
 
 
 class NowcastEngine:
@@ -28,7 +103,7 @@ class NowcastEngine:
         self,
         frames_dir: str | Path | None = None,
         *,
-        threshold_dbz: float = 40.0,
+        threshold_dbz: float = 15.0,
         frame_interval_minutes: float = 5.0,
         km_per_pixel: float = 1.0,
         origin_lat: float = 22.5726,
@@ -133,13 +208,23 @@ class NowcastEngine:
             raise ValueError("Radar frames must be finite and within the supported -40..100 dBZ range")
         return radar[None, :, None, :, :].astype(np.float32, copy=False)
 
-    def ingest_and_predict(self, raw_data_path: str | Path | None = None) -> np.ndarray:
-        """Return deterministic demo frames in the expected 5D tensor layout.
+    def ingest_and_predict(self, raw_data_path: str | Path | None = None, use_dgmr: bool = False) -> np.ndarray:
+        """Return deterministic demo frames in the expected 5D tensor layout, OR run DGMR inference.
 
         `raw_data_path` accepts either a 5D radar tensor or one of the saved
         per-frame dictionaries. The demo endpoint uses the bundled sequence.
-        No trained forecast model is run here.
+        If `use_dgmr` is True, it will pass the context tensor to the DGMR model.
         """
+        if use_dgmr:
+            if not hasattr(self, 'dgmr_engine'):
+                self.dgmr_engine = DGMRInferenceEngine()
+            print("Running Real DGMR Inference...")
+            # For this MVP, we just pass the bundled mock sequence as the "raw data" context
+            # to feed the DGMR model to predict the *next* frames.
+            context_tensor = self.input_tensor.copy()
+            future_tensor = self.dgmr_engine.predict(context_tensor)
+            return future_tensor
+
         if raw_data_path is None:
             return self.input_tensor.copy()
 
@@ -341,7 +426,10 @@ class NowcastEngine:
         return tracks
 
     def _classify_hazard(self, cell: dict) -> None:
-        if cell["area_km2"] < 20.0 and cell["max_dbz"] > 55.0:
+        if cell["max_dbz"] < 35.0:
+            cell["hazard_type"] = "Light/Moderate Rain"
+            cell["severity"] = "LOW"
+        elif cell["area_km2"] < 20.0 and cell["max_dbz"] > 55.0:
             cell["hazard_type"] = "Cloudburst"
             cell["severity"] = "HIGH"
         else:
