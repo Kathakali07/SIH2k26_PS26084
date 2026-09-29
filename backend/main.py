@@ -5,21 +5,21 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-try:  # Support both `python backend/main.py` and `uvicorn main:app --app-dir backend`.
-    from .engine import NowcastEngine
-except ImportError:
-    from engine import NowcastEngine
+try:
+    from .scenario_fixture import FRAME_COUNT, build_scenario
+except ImportError:  # Support `python backend/main.py` and uvicorn app-dir mode.
+    from scenario_fixture import FRAME_COUNT, build_scenario
 
 
-app = FastAPI(title="PRAMAAN-X Synthetic Demo API", version="0.2.0")
+app = FastAPI(title="PRAMAAN-X Synthetic Demo API", version="0.3.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -32,7 +32,6 @@ class RadarStateRequest(BaseModel):
 class SystemState:
     def __init__(self) -> None:
         self.radar_active = True
-        self.engine = NowcastEngine()
 
     def reset(self) -> None:
         self.radar_active = True
@@ -45,66 +44,88 @@ def _iso_utc(value: datetime) -> str:
     return value.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
-def _eta_minutes(storm: dict[str, Any]) -> float:
-    u, v = storm["velocity"]
-    speed_px_per_frame = (u**2 + v**2) ** 0.5
-    if speed_px_per_frame <= 0:
-        return 60.0
-    # Illustrative demo estimate: 100 grid pixels at the observed frame motion.
-    return max(5.0, (100.0 / speed_px_per_frame) * state.engine.frame_interval_minutes)
+def _feature_from_storm(storm: dict[str, Any], valid_time: str) -> dict[str, Any]:
+    center_lon = storm["position"]["lon"]
+    center_lat = storm["position"]["lat"]
+    uncertainty_scale = 1.0 if state.radar_active else 2.5
+    ring = storm["geometry"]["coordinates"][0]
+    expanded_ring = [
+        [center_lon + (point[0] - center_lon) * uncertainty_scale,
+         center_lat + (point[1] - center_lat) * uncertainty_scale]
+        for point in ring
+    ]
 
-
-def _feature_for_storm(sid: int, storm: dict[str, Any], now: datetime) -> dict[str, Any] | None:
-    ring = storm["ring"]
-    if len(ring) < 4:
-        return None
-
-    center_lon, center_lat = storm["position"]
-    scale = 2.5 if not state.radar_active else 1.0
-    coordinates = [[
-        [center_lon + (lon - center_lon) * scale, center_lat + (lat - center_lat) * scale]
-        for lon, lat in ring
-    ]]
-
-    eta_minutes = _eta_minutes(storm)
-    interval_minutes = 15.0 if not state.radar_active else 5.0
-    eta = now + timedelta(minutes=eta_minutes)
-    eta_min = now + timedelta(minutes=max(0.0, eta_minutes - interval_minutes))
-    eta_max = now + timedelta(minutes=eta_minutes + interval_minutes)
-    u, v = storm["velocity"]
+    valid_dt = datetime.fromisoformat(valid_time.replace("Z", "+00:00"))
+    eta_minutes = storm["eta_minutes"]
+    eta_low, eta_high = storm["eta_interval_minutes"]
     return {
         "type": "Feature",
-        "geometry": {"type": "Polygon", "coordinates": coordinates},
+        "geometry": {"type": "Polygon", "coordinates": [expanded_ring]},
         "properties": {
-            "id": f"storm_cell_{sid}",
+            "id": storm["id"],
+            "name": storm["name"],
             "hazard_type": storm["hazard_type"],
             "severity": storm["severity"],
-            "eta_utc": _iso_utc(eta),
-            "eta_min_utc": _iso_utc(eta_min),
-            "eta_max_utc": _iso_utc(eta_max),
+            "eta_utc": _iso_utc(valid_dt + timedelta(minutes=eta_minutes)),
+            "eta_min_utc": _iso_utc(valid_dt + timedelta(minutes=eta_low)),
+            "eta_max_utc": _iso_utc(valid_dt + timedelta(minutes=eta_high)),
             "eta_is_demo_estimate": True,
-            "max_dbz": float(storm["max_dbz"]),
-            "area_km2": float(storm["area_km2"]),
-            "velocity_u": float(u),
-            "velocity_v": float(v),
-            "centroid": {"lon": float(center_lon), "lat": float(center_lat)},
-            "bbox_px": list(storm["bbox"]),
-            "source_mode": "synthetic_demo",
-            "storm_data_provenance": "calculated_from_synthetic_frames",
+            "valid_time_utc": valid_time,
+            "max_dbz": storm["max_dbz"],
+            "area_km2": storm["area_km2"],
+            "motion": storm["motion"],
+            "lifecycle": storm["lifecycle"],
+            "growth_rate_km2_per_5min": storm["growth_rate_km2_per_5min"],
+            "hazards": storm["hazards"],
+            "indicators": storm["indicators"],
+            "sensor_reliability": storm["sensor_reliability"],
+            "provenance": storm["provenance"],
             "radar_active": state.radar_active,
-            "uncertainty_scale": scale,
+            "uncertainty_scale": uncertainty_scale,
         },
     }
 
 
-def _features(now: datetime | None = None) -> list[dict[str, Any]]:
-    timestamp = now or datetime.now(timezone.utc)
-    result = []
-    for sid, storm in sorted(state.engine.latest_storms.items()):
-        feature = _feature_for_storm(sid, storm, timestamp)
-        if feature is not None:
-            result.append(feature)
-    return result
+def _scenario(frame_index: int) -> dict[str, Any]:
+    scenario = build_scenario(frame_index=frame_index, radar_active=state.radar_active)
+    geojson = {
+        "type": "FeatureCollection",
+        "features": [
+            _feature_from_storm(storm, scenario["valid_time_utc"])
+            for storm in scenario["storms"]
+        ],
+    }
+    feature_by_id = {feature["properties"]["id"]: feature for feature in geojson["features"]}
+    uncertainty_scale = 1.0 if state.radar_active else 2.5
+    for storm in scenario["storms"]:
+        feature = feature_by_id[storm["id"]]
+        storm["radar_active"] = state.radar_active
+        storm["uncertainty_scale"] = uncertainty_scale
+        storm["uncertainty_geometry"] = feature["geometry"]
+        storm.update({
+            key: value
+            for key, value in feature["properties"].items()
+            if key not in {"id", "name", "hazard_type", "severity", "max_dbz", "area_km2", "motion", "lifecycle", "growth_rate_km2_per_5min", "hazards", "indicators", "sensor_reliability", "provenance"}
+        })
+    scenario["radar_active"] = state.radar_active
+    scenario["uncertainty_scale"] = uncertainty_scale
+    scenario["geojson"] = geojson
+    scenario["current"]["storms"] = scenario["storms"]
+    scenario["current"]["geojson"] = geojson
+    scenario["current"]["radar_active"] = state.radar_active
+    scenario["current"]["uncertainty_scale"] = uncertainty_scale
+    return scenario
+
+
+def _feature_collection(scenario: dict[str, Any]) -> dict[str, Any]:
+    """Build a valid empty-or-populated GeoJSON collection from scenario state."""
+    return {
+        "type": "FeatureCollection",
+        "features": [
+            _feature_from_storm(storm, scenario["valid_time_utc"])
+            for storm in scenario.get("storms", [])
+        ],
+    }
 
 
 @app.get("/api/health")
@@ -113,85 +134,35 @@ def get_health() -> dict[str, str]:
 
 
 @app.get("/api/nowcast/live")
-def get_live_data() -> dict[str, Any]:
-    """Return the latest tracked storms as an RFC 7946 GeoJSON FeatureCollection."""
-    return {"type": "FeatureCollection", "features": _features()}
+def get_live_data(
+    frame_index: int = Query(default=FRAME_COUNT - 1, ge=0, lt=FRAME_COUNT),
+) -> dict[str, Any]:
+    """Return the selected fixture frame as an RFC 7946 FeatureCollection."""
+    scenario = _scenario(frame_index)
+    return _feature_collection(scenario)
 
 
 @app.get("/api/scenario")
-def get_scenario() -> dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    feature_collection = {"type": "FeatureCollection", "features": _features(now)}
-    storms = []
-    for feature in feature_collection["features"]:
-        properties = feature["properties"]
-        storms.append({
-            "id": properties["id"],
-            "geometry": feature["geometry"],
-            "position": properties["centroid"],
-            "area_km2": properties["area_km2"],
-            "max_dbz": properties["max_dbz"],
-            "motion": {
-                "u": properties["velocity_u"],
-                "v": properties["velocity_v"],
-                "speed_px_per_frame": float((properties["velocity_u"]**2 + properties["velocity_v"]**2) ** 0.5),
-            },
-            "hazard_type": properties["hazard_type"],
-            "severity": properties["severity"],
-            "eta_utc": properties["eta_utc"],
-            "eta_min_utc": properties["eta_min_utc"],
-            "eta_max_utc": properties["eta_max_utc"],
-            "provenance": {
-                "geometry": "calculated_from_synthetic_radar",
-                "max_dbz": "synthetic_input",
-                "motion": "calculated_from_synthetic_frames",
-                "hazard_type": "calculated_threshold_demo",
-                "eta": "simulated_demo_estimate",
-            },
-        })
-
-    return {
-        "scenario_id": "kolkata_demo_01",
-        "scenario_name": "PRAMAAN-X Synthetic Storm Tracking Demo",
-        "mode": "synthetic_demo",
-        "valid_time_utc": _iso_utc(now),
-        "frame_count": len(state.engine.frames),
-        "frame_interval_minutes": state.engine.frame_interval_minutes,
-        "grid": {
-            "height": int(state.engine.input_tensor.shape[-2]),
-            "width": int(state.engine.input_tensor.shape[-1]),
-            "km_per_pixel": state.engine.km_per_pixel,
-            "origin": {"lon": state.engine.origin_lon, "lat": state.engine.origin_lat},
-        },
-        "data_sources": [{"name": state.engine.source, "status": "synthetic_demo"}],
-        "sensors": {
-            "radar": {"available": state.radar_active, "reliability": 0.9 if state.radar_active else 0.0, "age_seconds": 0, "provenance": "simulated"},
-            "satellite": {"available": False, "reliability": None, "age_seconds": None, "provenance": "unavailable"},
-            "lightning": {"available": False, "reliability": None, "age_seconds": None, "provenance": "unavailable"},
-            "nwp": {"available": False, "reliability": None, "age_seconds": None, "provenance": "unavailable"},
-        },
-        "fallback": {
-            "active": not state.radar_active,
-            "mode": "simulated_fallback" if not state.radar_active else None,
-            "message": "Radar unavailable; fallback behavior is simulated. No alternate live feed is connected." if not state.radar_active else None,
-        },
-        "uncertainty_scale": 2.5 if not state.radar_active else 1.0,
-        "storms": storms,
-        "geojson": feature_collection,
-        "model": {"name": "deterministic demo tracking", "earthformer_inference": False},
-    }
+def get_scenario(
+    frame_index: int = Query(default=FRAME_COUNT - 1, ge=0, lt=FRAME_COUNT),
+) -> dict[str, Any]:
+    """Return canonical scenario state and all timestamped replay frames."""
+    scenario = _scenario(frame_index)
+    scenario["geojson"] = _feature_collection(scenario)
+    scenario["current"]["geojson"] = scenario["geojson"]
+    return scenario
 
 
 @app.post("/api/kill-radar")
 def set_radar_state(request: RadarStateRequest | None = None) -> dict[str, Any]:
-    """Set radar unavailable (default) or restore it with `{\"active\": true}`."""
+    """Set radar offline (no body) or online with `{\"active\": true}`."""
     state.radar_active = bool(request.active) if request is not None else False
     return {
         "radar_active": state.radar_active,
         "fallback_active": not state.radar_active,
         "fallback_mode": "simulated_fallback" if not state.radar_active else None,
         "uncertainty_scale": 1.0 if state.radar_active else 2.5,
-        "message": "Radar online." if state.radar_active else "Radar offline; fallback behavior simulated and uncertainty expanded.",
+        "message": "Radar online." if state.radar_active else "Radar offline; fallback behavior is simulated and uncertainty widened.",
     }
 
 
