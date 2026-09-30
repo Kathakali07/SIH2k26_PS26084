@@ -16,10 +16,11 @@ export default function GISMap({ threats, selectedThreat, onSelectThreat }) {
         zoomControl: false
       });
 
-      // CartoDB Dark Matter basemap (essential for radar contrast)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-        maxZoom: 19
+      // OpenStreetMap basemap with dark filter (zero API key required)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19,
+        className: 'dark-tiles'
       }).addTo(map);
 
       L.control.zoom({ position: 'topright' }).addTo(map);

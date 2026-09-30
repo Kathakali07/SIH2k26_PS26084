@@ -29,75 +29,87 @@ export default function InteractiveLeafletMap({
     }
 
     // 2. Inject Dark Map and Pulse Styles (Exact same as web frontend)
-    if (!document.getElementById('leaflet-dark-theme-style')) {
-      const style = document.createElement('style');
+    let style = document.getElementById('leaflet-dark-theme-style');
+    if (!style) {
+      style = document.createElement('style');
       style.id = 'leaflet-dark-theme-style';
-      style.innerHTML = `
-        .leaflet-container {
-          background: #060b17 !important;
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        }
-        .dark-tiles {
-          filter: invert(1) hue-rotate(200deg) brightness(0.7) contrast(1.1) saturate(0.3) !important;
-        }
-        .leaflet-overlay-pane,
-        .leaflet-marker-pane,
-        .leaflet-tooltip-pane,
-        .leaflet-popup-pane,
-        .leaflet-shadow-pane {
-          filter: none !important;
-        }
-        .custom-storm-tooltip {
-          background: rgba(10, 15, 29, 0.95) !important;
-          border: 1px solid rgba(255, 255, 255, 0.15) !important;
-          border-radius: 8px !important;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
-          color: #ffffff !important;
-          padding: 8px 10px !important;
-        }
-        .custom-storm-tooltip::before {
-          border-right-color: rgba(10, 15, 29, 0.95) !important;
-        }
-        .storm-marker-glow {
-          box-shadow: 0 0 15px rgba(239, 68, 68, 0.8), 0 0 30px rgba(239, 68, 68, 0.4);
-          animation: stormPulseAnim 2s infinite ease-in-out;
-        }
-        @keyframes stormPulseAnim {
-          0% { transform: scale(1); }
-          50% { transform: scale(1.1); }
-          100% { transform: scale(1); }
-        }
-      `;
       document.head.appendChild(style);
     }
+    style.innerHTML = `
+      .leaflet-container {
+        background: #060b17 !important;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      }
+      .dark-tiles {
+        filter: invert(1) hue-rotate(200deg) brightness(0.7) contrast(1.1) saturate(0.3) !important;
+      }
+      .leaflet-overlay-pane,
+      .leaflet-marker-pane,
+      .leaflet-tooltip-pane,
+      .leaflet-popup-pane,
+      .leaflet-shadow-pane {
+        filter: none !important;
+      }
+      .custom-storm-tooltip {
+        background: rgba(10, 15, 29, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+        color: #ffffff !important;
+        padding: 8px 10px !important;
+      }
+      .custom-storm-tooltip::before {
+        border-right-color: rgba(10, 15, 29, 0.95) !important;
+      }
+      .storm-marker-glow {
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.8), 0 0 30px rgba(239, 68, 68, 0.4);
+        animation: stormPulseAnim 2s infinite ease-in-out;
+      }
+      @keyframes stormPulseAnim {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+      }
+    `;
 
     // 3. Initialize Leaflet Map Instance
     const L = require('leaflet');
     const container =
       mapContainerRef.current || document.getElementById('leaflet-mobile-container');
 
-    if (container && !mapInstanceRef.current) {
-      const map = L.map(container, {
-        center: [46.82, 8.23], // Center of Switzerland
-        zoom: 8,
-        zoomControl: true,
-        attributionControl: false,
-      });
+    if (container) {
+      if (container._leaflet_id && !mapInstanceRef.current) {
+        delete container._leaflet_id;
+      }
 
-      // Free OpenStreetMap Tiles with .dark-tiles filter (Zero API Key, zero watermark)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        className: 'dark-tiles',
-      }).addTo(map);
+      if (!mapInstanceRef.current) {
+        try {
+          const map = L.map(container, {
+            center: [46.82, 8.23], // Center of Switzerland
+            zoom: 8,
+            zoomControl: true,
+            attributionControl: false,
+          });
 
-      mapInstanceRef.current = map;
+          // Free OpenStreetMap Tiles with .dark-tiles filter (Zero API Key, zero watermark - exact same as web frontend MainMap.jsx)
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            className: 'dark-tiles',
+            attribution: '&copy; OpenStreetMap contributors',
+          }).addTo(map);
 
-      // Invalidate size after layout settles
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
+          mapInstanceRef.current = map;
+
+          // Invalidate size after layout settles
+          setTimeout(() => {
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.invalidateSize();
+            }
+          }, 250);
+        } catch (err) {
+          console.warn('Leaflet map initialization notice:', err);
         }
-      }, 250);
+      }
     }
 
     return () => {

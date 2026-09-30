@@ -68,7 +68,7 @@ export default function NowcastScreen({
       {/* Map View Area (Fills entire available height) */}
       <View style={styles.mapContainer}>
         {isWeb ? (
-          // Real Interactive Leaflet GIS Map on Web (CartoDB Dark Matter tiles + pan + zoom)
+          // Real Interactive Leaflet GIS Map on Web (OpenStreetMap Dark-Tiles + pan + zoom)
           <InteractiveLeafletMap
             storms={storms}
             selectedStormId={selectedStormId}
