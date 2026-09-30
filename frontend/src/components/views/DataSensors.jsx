@@ -7,7 +7,7 @@ export default function DataSensors({ setActiveTab }) {
   const [satelliteOffline, setSatelliteOffline] = useState(false);
   const [lightningOffline, setLightningOffline] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_BASE ?? (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : '');
+  const API_BASE = import.meta.env.VITE_API_BASE ?? (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://sih2k26-ps26084.onrender.com');
 
   const handleToggleRadar = async () => {
     const nextState = !radarOffline;

@@ -62,7 +62,7 @@ npm start
 
 ## ⚙️ Server Configuration
 In the mobile app, tap `☰` $\rightarrow$ **Settings & Server**:
-- **Live Cloud Deployment (Default):** Connects to `https://climax-convective-nowcast.onrender.com`.
+- **Live Cloud Deployment (Default):** Connects to `https://sih2k26-ps26084.onrender.com`.
 - **Localhost Backend:** Connects to `http://localhost:8000`.
 - **Android Emulator:** Connects to `http://10.0.2.2:8000`.
 - **Offline Mode:** Runs pure local calculations with zero network requirement.

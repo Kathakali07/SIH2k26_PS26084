@@ -23,6 +23,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import {
   DEFAULT_API_BASE,
   generateLocalFallbackScenario,
+  normalizeStormFeature,
 } from './src/config/api';
 
 const TOTAL_FRAMES = 38;
@@ -64,9 +65,16 @@ export default function App() {
         return res.json();
       })
       .then((data) => {
-        if (data && data.features) {
-          setScenarioData(data);
-          if (data.sensors && data.sensors.radar) {
+        const rawStorms = data?.storms || data?.features || data?.geojson?.features;
+        if (data && Array.isArray(rawStorms) && rawStorms.length > 0) {
+          const normalizedFeatures = rawStorms.map(normalizeStormFeature).filter(Boolean);
+          setScenarioData({
+            ...data,
+            features: normalizedFeatures,
+          });
+          if (data.radar_active !== undefined) {
+            setRadarActive(data.radar_active);
+          } else if (data.sensors && data.sensors.radar) {
             setRadarActive(data.sensors.radar.available);
           }
         } else {
@@ -98,11 +106,11 @@ export default function App() {
 
     if (!offlineMode) {
       try {
-        await fetch(`${apiBase}/api/kill-radar`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ active: nextState }),
-        });
+        if (nextState) {
+          await fetch(`${apiBase}/api/reset-demo`, { method: 'POST' });
+        } else {
+          await fetch(`${apiBase}/api/kill-radar`, { method: 'POST' });
+        }
       } catch (e) {
         // Handled via local state
       }

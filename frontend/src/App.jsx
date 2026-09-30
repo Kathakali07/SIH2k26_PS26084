@@ -17,7 +17,7 @@ import DataSensors from './components/views/DataSensors';
 import Alerts from './components/views/Alerts';
 import SettingsView from './components/views/SettingsView';
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : '');
+const API_BASE = import.meta.env.VITE_API_BASE ?? (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : 'https://sih2k26-ps26084.onrender.com');
 const TOTAL_FRAMES = 38;
 const NOW_FRAME_INDEX = 19; // Frame 19 is T+0 'NOW' (dividing observed from DGMR forecast)
 
