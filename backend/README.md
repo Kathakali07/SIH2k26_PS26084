@@ -1,4 +1,4 @@
-# PRAMAAN-X Backend Demo
+# ClimaX Backend Demo
 
 The backend currently runs a **deterministic synthetic demo sequence** from `../data/mock_frames/`. These files are not live weather observations and the backend does not run trained Earthformer inference.
 

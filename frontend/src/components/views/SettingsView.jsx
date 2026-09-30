@@ -232,7 +232,7 @@ export default function SettingsView({ activeTab, setActiveTab }) {
                       <div className="p-2 bg-blue-500/20 text-blue-400 rounded"><Webhook size={18} /></div>
                       <div>
                         <h4 className="text-sm font-medium text-gray-200">Custom Webhook</h4>
-                        <p className="text-xs text-gray-500 mt-0.5">https://api.yourdomain.com/pramaan/hook</p>
+                        <p className="text-xs text-gray-500 mt-0.5">https://api.yourdomain.com/climax/hook</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

@@ -113,7 +113,7 @@ export default function DataSensors({ setActiveTab }) {
                     Demonstration: Sensor Failure & Fallback Resilience
                   </h4>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    Toggle sensor outages to test how the PRAMAAN-X DGMR pipeline dynamically adapts uncertainty bounds and invokes synthetic nowcast fallback.
+                    Toggle sensor outages to test how the ClimaX DGMR pipeline dynamically adapts uncertainty bounds and invokes synthetic nowcast fallback.
                   </p>
                 </div>
                 <button
@@ -175,7 +175,7 @@ export default function DataSensors({ setActiveTab }) {
           <div className="flex flex-col gap-4 animate-in fade-in duration-200">
             <div>
               <h3 className="text-sm font-bold text-white mb-1">Active Meteorological Data Ingestion Feeds</h3>
-              <p className="text-xs text-gray-400">Real-time Swiss & European telemetry ingested by the PRAMAAN-X processing daemon.</p>
+              <p className="text-xs text-gray-400">Real-time Swiss & European telemetry ingested by the ClimaX processing daemon.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

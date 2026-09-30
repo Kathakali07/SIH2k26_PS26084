@@ -1,7 +1,7 @@
-# Design: Init PRAMAAN-X Architecture
+# Design: Init ClimaX Architecture
 
 ## Context
-We are implementing the PRAMAAN-X convective-scale nowcasting prototype. The system must process ML tensor predictions into vector geometries and stream them to a web client with strict performance requirements and observability fallbacks. See [[Earthformer_Spec]] for mathematical context.
+We are implementing the ClimaX convective-scale nowcasting prototype. The system must process ML tensor predictions into vector geometries and stream them to a web client with strict performance requirements and observability fallbacks. See [[Earthformer_Spec]] for mathematical context.
 
 ## Flow Architecture (PyTorch -> OpenCV -> FastAPI -> MapLibre)
 

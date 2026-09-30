@@ -36,7 +36,7 @@ def load_pysteps_real_data(shape=(1, 20, 1, 500, 500)):
     return tensor
 
 def run_dgmr_test():
-    print("=== PRAMAAN-X DGMR Real Data Test ===")
+    print("=== ClimaX DGMR Real Data Test ===")
     
     print("Loading base engine...")
     base_engine = NowcastEngine()

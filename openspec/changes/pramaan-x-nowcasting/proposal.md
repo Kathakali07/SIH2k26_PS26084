@@ -2,7 +2,7 @@
 
 ## Why
 
-We need to build a real-time convective-scale Nowcasting System (0–6 hour lead time) operating at a hyper-local 1–3 km spatial resolution for a 36-hour hackathon prototype (PRAMAAN-X). Traditional physics-based models are too computationally slow to simulate rapid developments like severe thunderstorms, hail, downburst winds, and cloudbursts in real-time.
+We need to build a real-time convective-scale Nowcasting System (0–6 hour lead time) operating at a hyper-local 1–3 km spatial resolution for a 36-hour hackathon prototype (ClimaX). Traditional physics-based models are too computationally slow to simulate rapid developments like severe thunderstorms, hail, downburst winds, and cloudbursts in real-time.
 
 ## What Changes
 

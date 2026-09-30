@@ -1,8 +1,8 @@
-# PRAMAAN-X Frontend Plan — SIH Demo
+# ClimaX Frontend Plan — SIH Demo
 
 ## Goal
 
-Build a polished, judge-friendly React dashboard that presents the complete PRAMAAN-X experience. Connect real/calculated fields to the backend where available; drive simulated panels from the same deterministic scenario; visibly distinguish measured, calculated, simulated, and unavailable data.
+Build a polished, judge-friendly React dashboard that presents the complete ClimaX experience. Connect real/calculated fields to the backend where available; drive simulated panels from the same deterministic scenario; visibly distinguish measured, calculated, simulated, and unavailable data.
 
 The repository currently has a React + Vite UI and Leaflet components. Inspect what `App.jsx` actually renders before editing: the current `WeatherMap` shown by the app is Australia-centered, while `GISMap.jsx` may not be mounted. Do not switch to MapLibre or another stack during the deadline unless the existing setup cannot support the demo.
 

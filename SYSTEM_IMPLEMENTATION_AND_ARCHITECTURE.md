@@ -1,6 +1,6 @@
-# ClimaX (PRAMAAN-X): System Architecture, Technical Implementation & Pitch Brief
+# ClimaX: System Architecture, Technical Implementation & Pitch Brief
 
-> **Project Name:** ClimaX (PRAMAAN-X Convective Nowcasting System)  
+> **Project Name:** ClimaX (Convective Nowcasting System)  
 > **Challenge Context:** Smart India Hackathon (SIH 2026) — Problem Statement **PS26084**  
 > **Domain:** AI-Driven Meteorological Nowcasting, Extreme Weather Hazard Mitigation & Civil Protection  
 > **Document Purpose:** Comprehensive technical specification, architectural blueprint, and slide-by-slide guide for presentation pitch decks.
@@ -17,7 +17,7 @@ Traditional meteorological systems fail during this 0–2 hour "nowcasting" wind
 2. **Optical Flow & Persistence Advection** (e.g., PySTEPS, Lucas-Kanade, TREC) simply shift past radar echoes linearly across the map. They cannot predict convective initiation, storm intensification, cell mergers, or rapid dissipation, and they quickly degrade after 20–30 minutes into blurry, smoothed artifacts.
 
 ### The ClimaX Solution
-**ClimaX (PRAMAAN-X)** bridges this gap by combining:
+**ClimaX** bridges this gap by combining:
 * **DeepMind's DGMR (Deep Generative Model of Radar):** A spatio-temporal Generative Adversarial Network (GAN) that predicts future radar reflectivity frames at 5-minute intervals up to 90 minutes ahead, retaining sharp convective cores and severe intensity gradients.
 * **Storm-as-an-Object (SAO) Tracking:** Converting continuous radar heatmaps into discrete, tracked kinematic physical objects with quantifiable velocity, heading, and lifecycle stages (*Initiating*, *Developing*, *Mature*, *Dissipating*).
 * **16-Member Generative Ensemble:** Generating 16 stochastic latent realizations to quantify arrival-time probabilities, trajectory divergence, and forecast uncertainty cones.
@@ -282,7 +282,7 @@ flowchart TD
 Use this 12-slide template for pitching ClimaX at hackathons and stakeholder presentations:
 
 ### Slide 1: Title & Hook
-* **Title:** ClimaX (PRAMAAN-X) — Convective Nowcasting System
+* **Title:** ClimaX — Convective Nowcasting System
 * **Subtitle:** From Storms to Safer Tomorrows: AI-Driven 0–90 Minute Severe Weather Intelligence
 * **Context:** Smart India Hackathon 2026 | Problem Statement PS26084
 * **Visual:** Dark-mode dashboard screenshot with convective supercell and uncertainty fan.

@@ -1,4 +1,4 @@
-# PRAMAAN-X Backend Handoff — Frontend Integration
+# ClimaX Backend Handoff — Frontend Integration
 
 ## Backend status and demo-data mode
 

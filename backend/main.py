@@ -13,7 +13,7 @@ except ImportError:
     from swiss_scenario import FRAME_COUNT, NOW_FRAME_INDEX, build_swiss_scenario
 
 
-app = FastAPI(title="PRAMAAN-X Swiss DGMR Nowcasting API", version="0.4.0")
+app = FastAPI(title="ClimaX Swiss DGMR Nowcasting API", version="0.4.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

@@ -1,8 +1,8 @@
-# PRAMAAN-X Backend Plan — SIH Demo
+# ClimaX Backend Plan — SIH Demo
 
 ## Goal
 
-Provide a stable API and deterministic scenario state for the PRAMAAN-X demo. The backend should support the complete UI experience, while identifying which values are measured, calculated, simulated, or unavailable.
+Provide a stable API and deterministic scenario state for the ClimaX demo. The backend should support the complete UI experience, while identifying which values are measured, calculated, simulated, or unavailable.
 
 This is a time-boxed demo plan, not a production weather-ingestion or model-training plan. The current repository has a FastAPI backend, an `EarthformerStub` that generates random predictions, a prototype contour/tracking engine, and `.npy` mock files that the live endpoint does not currently use. Verify formats and behavior before building on them.
 

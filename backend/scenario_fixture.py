@@ -1,4 +1,4 @@
-"""Deterministic, explicitly simulated scenario fixture for the PRAMAAN-X UI.
+"""Deterministic, explicitly simulated scenario fixture for the ClimaX UI.
 
 This fixture is separate from the synthetic raster tracking engine: it supplies
 coherent demo-only fields that are not present in the raster files. No values
@@ -360,7 +360,7 @@ def build_scenario(frame_index: int = FRAME_COUNT - 1, radar_active: bool = True
         "scenario_id": SCENARIO_ID,
         "scenario_name": SCENARIO_NAME,
         "mode": MODE,
-        "data_sources": [{"name": "Deterministic PRAMAAN-X demo fixture", "status": "synthetic_demo", "fields": ["storm_tracks", "hazard_indicators", "forecast_members", "impact_scenario"]}],
+        "data_sources": [{"name": "Deterministic ClimaX demo fixture", "status": "synthetic_demo", "fields": ["storm_tracks", "hazard_indicators", "forecast_members", "impact_scenario"]}],
         "sensors": {
             "radar": {"status": "simulated_online" if radar_active else "offline", "available": radar_active, "reliability": 0.92 if radar_active else 0.0, "age_seconds": 0, "provenance": "synthetic_demo"},
             "satellite": {"status": "unavailable", "available": False, "reliability": None, "age_seconds": None, "provenance": "unavailable_no_feed_connected"},

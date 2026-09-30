@@ -1,7 +1,7 @@
 # DGMR Integration Documentation
 
 ## Overview
-This branch (`feat/dgmr-integration`) implements the integration of the DeepMind Deep Generative Model of Rainfall (DGMR) into the PRAMAAN-X backend. The integration enables the system to process real radar data, run it through the DGMR neural network, and forecast future precipitation which is then passed to our OpenCV tracking engine.
+This branch (`feat/dgmr-integration`) implements the integration of the DeepMind Deep Generative Model of Rainfall (DGMR) into the ClimaX backend. The integration enables the system to process real radar data, run it through the DGMR neural network, and forecast future precipitation which is then passed to our OpenCV tracking engine.
 
 ## Key Changes
 1. **Model Integration (`engine.py`)**

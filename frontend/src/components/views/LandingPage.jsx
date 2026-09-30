@@ -22,7 +22,7 @@ export default function LandingPage({ onEnterApp }) {
           </div>
           <div>
             <span className="text-xl font-bold tracking-wide">ClimaX</span>
-            <span className="text-[10px] text-blue-400 font-mono block -mt-1">PRAMAAN-X DGMR</span>
+            <span className="text-[10px] text-blue-400 font-mono block -mt-1">ClimaX DGMR</span>
           </div>
         </div>
         <div className="flex items-center gap-8 text-sm text-gray-300">

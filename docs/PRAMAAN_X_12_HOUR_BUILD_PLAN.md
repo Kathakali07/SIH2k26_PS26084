@@ -1,8 +1,8 @@
-# PRAMAAN-X: 12-Hour Prototype Build Plan
+# ClimaX: 12-Hour Prototype Build Plan
 
 ## 1. Purpose
 
-Build a polished, interactive prototype that presents the **complete PRAMAAN-X product experience** in the UI, while grounding available capabilities in real inputs where practical and using deterministic demo data for signals/models that cannot be implemented credibly in the remaining 12 hours.
+Build a polished, interactive prototype that presents the **complete ClimaX product experience** in the UI, while grounding available capabilities in real inputs where practical and using deterministic demo data for signals/models that cannot be implemented credibly in the remaining 12 hours.
 
 The prototype must make the distinction clear:
 

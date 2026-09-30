@@ -1,7 +1,7 @@
-# PRAMAAN-X System Design
+# ClimaX System Design
 
 ## Overview
-PRAMAAN-X is a real-time convective-scale weather nowcasting prototype. It integrates a pre-trained SOTA Earthformer backbone with deterministic OpenCV tracking to predict and track extreme weather events (Thunderstorms, Cloudbursts).
+ClimaX is a real-time convective-scale weather nowcasting prototype. It integrates a pre-trained SOTA Earthformer backbone with deterministic OpenCV tracking to predict and track extreme weather events (Thunderstorms, Cloudbursts).
 
 ## Architecture
 

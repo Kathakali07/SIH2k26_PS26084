@@ -1,6 +1,6 @@
-# PRAMAAN-X Frontend Integration Guide
+# ClimaX Frontend Integration Guide
 
-This guide is designed for the frontend developer to build the MapLibre GIS Dashboard for the PRAMAAN-X nowcasting system. The backend AI handles all the heavy lifting (Earthformer model inference, OpenCV tracking), so the frontend is entirely decoupled and relies on a clean REST API.
+This guide is designed for the frontend developer to build the MapLibre GIS Dashboard for the ClimaX nowcasting system. The backend AI handles all the heavy lifting (Earthformer model inference, OpenCV tracking), so the frontend is entirely decoupled and relies on a clean REST API.
 
 ## 1. Tech Stack Requirements
 - **Framework**: React (Next.js or Vite)

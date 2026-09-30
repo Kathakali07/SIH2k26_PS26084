@@ -1,4 +1,4 @@
-"""Focused checks for the synthetic PRAMAAN-X backend demo."""
+"""Focused checks for the synthetic ClimaX backend demo."""
 
 import unittest
 from datetime import datetime, timedelta

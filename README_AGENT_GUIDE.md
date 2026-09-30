@@ -1,6 +1,6 @@
-# PRAMAAN-X: AI Agent & OpenSpec Setup Guide
+# ClimaX: AI Agent & OpenSpec Setup Guide
 
-Welcome to the PRAMAAN-X repository. This document serves as the global guide for human developers and future AI agents to understand the project architecture, the "Brain" memory system, and the OpenSpec development workflow used to build the real-time convective-scale nowcasting system (Kalbaishakhi Tracker).
+Welcome to the ClimaX repository. This document serves as the global guide for human developers and future AI agents to understand the project architecture, the "Brain" memory system, and the OpenSpec development workflow used to build the real-time convective-scale nowcasting system (Kalbaishakhi Tracker).
 
 ## 1. Project Context
 **Problem Statement**: SIH (Convective scale nowcasting for Thunderstorms, Hail & Cloudbursts 0–6 hr)

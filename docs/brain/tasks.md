@@ -1,4 +1,4 @@
-# PRAMAAN-X Tasks & Workflow
+# ClimaX Tasks & Workflow
 
 ## Phase 1: Propose (Current Phase)
 - [x] Create Obsidian-compatible `/docs/brain` folder.
