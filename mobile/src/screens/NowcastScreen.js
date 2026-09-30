@@ -5,21 +5,20 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Platform,
 } from 'react-native';
 import Svg, {
   Rect,
   Circle,
-  Path,
-  Polygon,
   G,
   Text as SvgText,
   Line,
 } from 'react-native-svg';
 import TimelineControl from '../components/TimelineControl';
 import StormBottomSheet from '../components/StormBottomSheet';
+import InteractiveLeafletMap from '../components/InteractiveLeafletMap';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const MAP_HEIGHT = Math.max(340, Math.min(460, SCREEN_WIDTH * 1.15));
 
 // Switzerland geographic bounds
 const SWISS_BOUNDS = {
@@ -29,14 +28,12 @@ const SWISS_BOUNDS = {
   maxLat: 47.81,
 };
 
-// Coordinate to SVG screen pixel conversion
 function projectToSvg(lon, lat, width, height) {
   const x = ((lon - SWISS_BOUNDS.minLon) / (SWISS_BOUNDS.maxLon - SWISS_BOUNDS.minLon)) * width;
   const y = height - ((lat - SWISS_BOUNDS.minLat) / (SWISS_BOUNDS.maxLat - SWISS_BOUNDS.minLat)) * height;
   return { x, y };
 }
 
-// Major Swiss reference cities
 const CITIES = [
   { name: 'Zurich', lon: 8.54, lat: 47.37 },
   { name: 'Bern', lon: 7.44, lat: 46.95 },
@@ -64,185 +61,156 @@ export default function NowcastScreen({
   const selectedStorm = storms.find((s) => s.id === selectedStormId);
   const uncertaintyScale = radarActive ? 1.0 : 2.5;
 
+  const isWeb = Platform.OS === 'web';
+
   return (
     <View style={styles.container}>
-      {/* Map View Area */}
+      {/* Map View Area (Fills entire available height) */}
       <View style={styles.mapContainer}>
-        <Svg width={SCREEN_WIDTH} height={MAP_HEIGHT}>
-          {/* Dark Radar Background */}
-          <Rect x="0" y="0" width={SCREEN_WIDTH} height={MAP_HEIGHT} fill="#060b17" />
-
-          {/* Grid lines */}
-          {[1, 2, 3, 4].map((i) => (
-            <Line
-              key={`h-${i}`}
-              x1="0"
-              y1={(MAP_HEIGHT / 5) * i}
-              x2={SCREEN_WIDTH}
-              y2={(MAP_HEIGHT / 5) * i}
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="1"
-            />
-          ))}
-          {[1, 2, 3].map((i) => (
-            <Line
-              key={`v-${i}`}
-              x1={(SCREEN_WIDTH / 4) * i}
-              y1="0"
-              x2={(SCREEN_WIDTH / 4) * i}
-              y2={MAP_HEIGHT}
-              stroke="rgba(255,255,255,0.04)"
-              strokeWidth="1"
-            />
-          ))}
-
-          {/* Radar range rings centered in Switzerland */}
-          <Circle
-            cx={SCREEN_WIDTH * 0.52}
-            cy={MAP_HEIGHT * 0.48}
-            r={SCREEN_WIDTH * 0.22}
-            stroke="rgba(56, 189, 248, 0.12)"
-            strokeWidth="1"
-            fill="none"
+        {isWeb ? (
+          // Real Interactive Leaflet GIS Map on Web (CartoDB Dark Matter tiles + pan + zoom)
+          <InteractiveLeafletMap
+            storms={storms}
+            selectedStormId={selectedStormId}
+            onStormSelect={(id) => setSelectedStormId(id)}
+            radarActive={radarActive}
+            frameIndex={frameIndex}
           />
-          <Circle
-            cx={SCREEN_WIDTH * 0.52}
-            cy={MAP_HEIGHT * 0.48}
-            r={SCREEN_WIDTH * 0.38}
-            stroke="rgba(56, 189, 248, 0.08)"
-            strokeWidth="1"
-            fill="none"
-          />
+        ) : (
+          // Responsive SVG Canvas Fallback for native devices
+          <View style={styles.svgFallbackWrapper}>
+            <Svg width="100%" height="100%" viewBox={`0 0 ${SCREEN_WIDTH} 420`}>
+              <Rect x="0" y="0" width={SCREEN_WIDTH} height={420} fill="#060b17" />
 
-          {/* Reference cities & landmark labels */}
-          {CITIES.map((city, cIdx) => {
-            const pt = projectToSvg(city.lon, city.lat, SCREEN_WIDTH, MAP_HEIGHT);
-            return (
-              <G key={cIdx}>
-                <Circle cx={pt.x} cy={pt.y} r="2.5" fill="#64748b" />
-                <SvgText
-                  x={pt.x + 5}
-                  y={pt.y + 3}
-                  fill="#94a3b8"
-                  fontSize="9"
-                  fontWeight="600"
-                >
-                  {city.name}
-                </SvgText>
-              </G>
-            );
-          })}
-
-          {/* Render Active Storm Polygons */}
-          {storms.map((storm) => {
-            const isSelected = storm.id === selectedStormId;
-            const pt = projectToSvg(storm.position.lon, storm.position.lat, SCREEN_WIDTH, MAP_HEIGHT);
-            const radius = Math.max(16, Math.sqrt(storm.area_km2 || 300) * 1.1) * (uncertaintyScale > 1 ? 1.3 : 1);
-
-            // Severity color
-            const stormColor =
-              storm.severity === 'EXTREME'
-                ? '#e11d48'
-                : storm.severity === 'HIGH'
-                ? '#f97316'
-                : '#eab308';
-
-            // Uncertainty expanded outer cone
-            const outerRadius = radius * uncertaintyScale;
-
-            return (
-              <G key={storm.id}>
-                {/* Expanded Uncertainty Ring */}
-                <Circle
-                  cx={pt.x}
-                  cy={pt.y}
-                  r={outerRadius}
-                  fill={radarActive ? `${stormColor}12` : 'rgba(239, 68, 68, 0.22)'}
-                  stroke={radarActive ? `${stormColor}33` : '#ef4444'}
-                  strokeWidth={radarActive ? '1' : '1.5'}
-                  strokeDasharray={radarActive ? undefined : '3,3'}
+              {/* Grid Lines */}
+              {[1, 2, 3].map((i) => (
+                <Line
+                  key={`h-${i}`}
+                  x1="0"
+                  y1={105 * i}
+                  x2={SCREEN_WIDTH}
+                  y2={105 * i}
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth="1"
                 />
+              ))}
 
-                {/* Core Intensity Ring */}
-                <Circle
-                  cx={pt.x}
-                  cy={pt.y}
-                  r={radius}
-                  fill={`${stormColor}40`}
-                  stroke={stormColor}
-                  strokeWidth={isSelected ? '2.5' : '1.5'}
+              {/* Radar Rings */}
+              <Circle
+                cx={SCREEN_WIDTH * 0.52}
+                cy={210}
+                r={SCREEN_WIDTH * 0.25}
+                stroke="rgba(56, 189, 248, 0.15)"
+                strokeWidth="1"
+                fill="none"
+              />
+              <Circle
+                cx={SCREEN_WIDTH * 0.52}
+                cy={210}
+                r={SCREEN_WIDTH * 0.42}
+                stroke="rgba(56, 189, 248, 0.08)"
+                strokeWidth="1"
+                fill="none"
+              />
+
+              {/* Swiss Cities */}
+              {CITIES.map((city, cIdx) => {
+                const pt = projectToSvg(city.lon, city.lat, SCREEN_WIDTH, 420);
+                return (
+                  <G key={cIdx}>
+                    <Circle cx={pt.x} cy={pt.y} r="3" fill="#64748b" />
+                    <SvgText
+                      x={pt.x + 6}
+                      y={pt.y + 4}
+                      fill="#94a3b8"
+                      fontSize="10"
+                      fontWeight="700"
+                    >
+                      {city.name}
+                    </SvgText>
+                  </G>
+                );
+              })}
+
+              {/* Storm Cells */}
+              {storms.map((storm) => {
+                const pt = projectToSvg(storm.position.lon, storm.position.lat, SCREEN_WIDTH, 420);
+                const radius = Math.max(18, Math.sqrt(storm.area_km2 || 300) * 1.1);
+                const stormColor =
+                  storm.severity === 'EXTREME'
+                    ? '#ef4444'
+                    : storm.severity === 'HIGH'
+                    ? '#f97316'
+                    : '#eab308';
+
+                return (
+                  <G key={storm.id}>
+                    <Circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={radius * uncertaintyScale}
+                      fill={radarActive ? `${stormColor}15` : 'rgba(239, 68, 68, 0.2)'}
+                      stroke={radarActive ? `${stormColor}40` : '#ef4444'}
+                      strokeWidth={radarActive ? '1' : '1.5'}
+                      strokeDasharray={radarActive ? undefined : '3,3'}
+                    />
+                    <Circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={radius}
+                      fill={`${stormColor}45`}
+                      stroke={stormColor}
+                      strokeWidth="2"
+                    />
+                    <Circle cx={pt.x} cy={pt.y} r="4" fill="#ffffff" />
+
+                    <SvgText
+                      x={pt.x}
+                      y={pt.y - radius - 6}
+                      fill="#ffffff"
+                      fontSize="11"
+                      fontWeight="800"
+                      textAnchor="middle"
+                    >
+                      {storm.name}
+                    </SvgText>
+                    <SvgText
+                      x={pt.x}
+                      y={pt.y - radius + 6}
+                      fill={stormColor}
+                      fontSize="10"
+                      fontWeight="800"
+                      textAnchor="middle"
+                    >
+                      {storm.max_dbz} dBZ
+                    </SvgText>
+                  </G>
+                );
+              })}
+            </Svg>
+
+            {/* Tap targets for fallback */}
+            {storms.map((storm) => {
+              const pt = projectToSvg(storm.position.lon, storm.position.lat, SCREEN_WIDTH, 420);
+              return (
+                <TouchableOpacity
+                  key={`t-${storm.id}`}
+                  style={[styles.stormHitArea, { left: pt.x - 30, top: pt.y - 30 }]}
+                  onPress={() => setSelectedStormId(storm.id === selectedStormId ? null : storm.id)}
                 />
+              );
+            })}
+          </View>
+        )}
 
-                {/* Centroid Bullseye */}
-                <Circle cx={pt.x} cy={pt.y} r="4" fill={stormColor} />
-                <Circle cx={pt.x} cy={pt.y} r="2" fill="#ffffff" />
-
-                {/* Velocity vector line */}
-                {storm.speed_kmh && (
-                  <Line
-                    x1={pt.x}
-                    y1={pt.y}
-                    x2={pt.x + Math.sin((storm.direction * Math.PI) / 180) * 26}
-                    y2={pt.y - Math.cos((storm.direction * Math.PI) / 180) * 26}
-                    stroke="#ffffff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                  />
-                )}
-
-                {/* Storm Name & Peak dBZ Tag */}
-                <SvgText
-                  x={pt.x}
-                  y={pt.y - radius - 6}
-                  fill="#ffffff"
-                  fontSize="10"
-                  fontWeight="800"
-                  textAnchor="middle"
-                >
-                  {storm.name}
-                </SvgText>
-                <SvgText
-                  x={pt.x}
-                  y={pt.y - radius + 5}
-                  fill={stormColor}
-                  fontSize="9"
-                  fontWeight="700"
-                  textAnchor="middle"
-                >
-                  {storm.max_dbz} dBZ
-                </SvgText>
-              </G>
-            );
-          })}
-        </Svg>
-
-        {/* Transparent touch buttons over each storm for instant mobile interaction */}
-        {storms.map((storm) => {
-          const pt = projectToSvg(storm.position.lon, storm.position.lat, SCREEN_WIDTH, MAP_HEIGHT);
-          return (
-            <TouchableOpacity
-              key={`touch-${storm.id}`}
-              style={[
-                styles.stormHitArea,
-                {
-                  left: pt.x - 32,
-                  top: pt.y - 32,
-                },
-              ]}
-              onPress={() => setSelectedStormId(storm.id === selectedStormId ? null : storm.id)}
-              activeOpacity={0.7}
-            />
-          );
-        })}
-
-        {/* Legend Overlay at top right of map */}
+        {/* Floating Map Legend (Top Right) */}
         <View style={styles.mapLegend}>
           <Text style={styles.legendTitle}>RADAR dBZ</Text>
           <View style={styles.legendBar}>
-            <View style={[styles.legendStep, { backgroundColor: '#10b981' }]} />
+            <View style={[styles.legendStep, { backgroundColor: '#22c55e' }]} />
             <View style={[styles.legendStep, { backgroundColor: '#eab308' }]} />
             <View style={[styles.legendStep, { backgroundColor: '#f97316' }]} />
-            <View style={[styles.legendStep, { backgroundColor: '#e11d48' }]} />
+            <View style={[styles.legendStep, { backgroundColor: '#ef4444' }]} />
             <View style={[styles.legendStep, { backgroundColor: '#d946ef' }]} />
           </View>
           <View style={styles.legendLabels}>
@@ -252,13 +220,13 @@ export default function NowcastScreen({
           </View>
         </View>
 
-        {/* Region context badge */}
+        {/* Region context badge (Top Left) */}
         <View style={styles.regionBadge}>
           <Text style={styles.regionText}>SWISS ALPS • RAD4ALPS</Text>
         </View>
       </View>
 
-      {/* Docked Timeline Controls at bottom of map */}
+      {/* Docked Timeline Controls at bottom */}
       <TimelineControl
         frameIndex={frameIndex}
         setFrameIndex={setFrameIndex}
@@ -270,7 +238,7 @@ export default function NowcastScreen({
         setPlaybackSpeed={setPlaybackSpeed}
       />
 
-      {/* Selected Storm Detail Bottom Sheet */}
+      {/* Slide-Up Bottom Sheet when a storm is selected */}
       {selectedStorm && (
         <StormBottomSheet
           storm={selectedStorm}
@@ -293,36 +261,46 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
   },
+  svgFallbackWrapper: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   stormHitArea: {
     position: 'absolute',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     zIndex: 10,
   },
   mapLegend: {
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: 'rgba(10, 15, 29, 0.85)',
+    backgroundColor: 'rgba(10, 15, 29, 0.90)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.12)',
     borderRadius: 8,
-    padding: 6,
-    width: 86,
+    padding: 7,
+    width: 92,
+    zIndex: 500,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
   },
   legendTitle: {
     fontSize: 8,
     fontWeight: '800',
     color: '#94a3b8',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     marginBottom: 4,
     textAlign: 'center',
   },
   legendBar: {
     flexDirection: 'row',
-    height: 5,
-    borderRadius: 2.5,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 2,
   },
@@ -342,13 +320,18 @@ const styles = StyleSheet.create({
   regionBadge: {
     position: 'absolute',
     top: 12,
-    left: 12,
-    backgroundColor: 'rgba(10, 15, 29, 0.85)',
+    left: 64, // Positioned beside hamburger button
+    backgroundColor: 'rgba(10, 15, 29, 0.90)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.12)',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 4,
+    zIndex: 500,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
   },
   regionText: {
     fontSize: 9,
