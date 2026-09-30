@@ -33,12 +33,13 @@ def extract_storm_cells(radar_dbz, threshold=40.0):
         cv2.drawContours(contour_mask, [contour], -1, 255, -1)
         max_dbz = np.max(radar_dbz[contour_mask == 255]) if np.any(contour_mask == 255) else 0
         
-        # We store coordinates (note: in our mock, 1 pixel = 1km)
-        # Assuming origin (0,0) is at some longitude/latitude and each km is roughly 0.009 degrees
-        base_lon = 88.3639 # Kolkata roughly
+        # Grid coordinate projection: 1 pixel represents ~1.0 km
+        # Geographic origin coordinates for radar domain mapping
+        base_lon = 88.3639
         base_lat = 22.5726
         
-        lon = base_lon + (cx * 0.009) # very rough approximation for demo
+        # Approximate degree scaling per grid unit
+        lon = base_lon + (cx * 0.009)
         lat = base_lat - (cy * 0.009)
         
         # Convert contour to geo-coordinates

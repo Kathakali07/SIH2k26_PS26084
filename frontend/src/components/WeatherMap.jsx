@@ -14,6 +14,10 @@ export default function WeatherMap({ activeMapLayer, isMapEnlarged, onToggleMapE
       const map = L.map(mapContainerRef.current, {
         center: [-25.2744, 133.7751],
         zoom: 5,
+        minZoom: 4,
+        maxZoom: 16,
+        maxBounds: [[-46.0, 108.0], [-8.0, 160.0]],
+        maxBoundsViscosity: 0.8,
         zoomControl: false,
       });
 
@@ -22,11 +26,12 @@ export default function WeatherMap({ activeMapLayer, isMapEnlarged, onToggleMapE
       // Base Esri map matching the visual style in the image (no labels, dark)
       L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
         attribution: 'Esri, USGS | Esri, Garmin, FAO, NOAA',
-        maxZoom: 16
+        minZoom: 4,
+        maxZoom: 16,
+        noWrap: true,
       }).addTo(map);
 
-      // We'll use L.svgOverlay to create a geographically-bound linear gradient 
-      // that matches the exact colors in your screenshot.
+      // Geographically bound linear gradient overlay for regional thermal layers
       const bounds = [[-8, 110], [-45, 155]];
       
       const svgElementTemp = document.createElementNS("http://www.w3.org/2000/svg", "svg");

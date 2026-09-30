@@ -92,12 +92,18 @@ function getStaticNativeLeafletHtml() {
     var map = L.map('map', {
       center: [46.82, 8.23],
       zoom: 8,
+      minZoom: 6,
+      maxZoom: 18,
+      maxBounds: [[41.0, 1.0], [52.5, 16.0]],
+      maxBoundsViscosity: 0.8,
       zoomControl: true,
       attributionControl: false
     });
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      minZoom: 6,
       maxZoom: 19,
+      noWrap: true,
       className: 'dark-tiles',
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
@@ -360,12 +366,18 @@ export default function InteractiveLeafletMap({
           const map = L.map(container, {
             center: [46.82, 8.23],
             zoom: 8,
+            minZoom: 6,
+            maxZoom: 18,
+            maxBounds: [[41.0, 1.0], [52.5, 16.0]],
+            maxBoundsViscosity: 0.8,
             zoomControl: true,
             attributionControl: false,
           });
 
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            minZoom: 6,
             maxZoom: 19,
+            noWrap: true,
             className: 'dark-tiles',
             attribution: '&copy; OpenStreetMap contributors',
           }).addTo(map);

@@ -15,11 +15,17 @@ export default function StormInteractions({ storms = [], setActiveTab }) {
       const map = L.map(mapContainerRef.current, {
         center: [46.82, 8.23], // Center of Switzerland
         zoom: 8,
+        minZoom: 6,
+        maxZoom: 18,
+        maxBounds: [[41.0, 1.0], [52.5, 16.0]],
+        maxBoundsViscosity: 0.8,
         zoomControl: false,
       });
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        minZoom: 6,
         maxZoom: 18,
+        noWrap: true,
         className: 'dark-tiles',
       }).addTo(map);
 

@@ -36,10 +36,16 @@ export default function HistoricalReplay({ setActiveTab }) {
       const leftMap = L.map(leftMapContainerRef.current, {
         center: [46.85, 8.45],
         zoom: 8,
+        minZoom: 6,
+        maxZoom: 18,
+        maxBounds: [[41.0, 1.0], [52.5, 16.0]],
+        maxBoundsViscosity: 0.8,
         zoomControl: false,
       });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        minZoom: 6,
         maxZoom: 18,
+        noWrap: true,
         className: 'dark-tiles',
       }).addTo(leftMap);
       leftLayerGroupRef.current = L.layerGroup().addTo(leftMap);
@@ -50,10 +56,16 @@ export default function HistoricalReplay({ setActiveTab }) {
       const rightMap = L.map(rightMapContainerRef.current, {
         center: [46.85, 8.45],
         zoom: 8,
+        minZoom: 6,
+        maxZoom: 18,
+        maxBounds: [[41.0, 1.0], [52.5, 16.0]],
+        maxBoundsViscosity: 0.8,
         zoomControl: false,
       });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        minZoom: 6,
         maxZoom: 18,
+        noWrap: true,
         className: 'dark-tiles',
       }).addTo(rightMap);
       rightLayerGroupRef.current = L.layerGroup().addTo(rightMap);

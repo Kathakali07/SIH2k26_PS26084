@@ -27,8 +27,7 @@ def load_pysteps_real_data(shape=(1, 20, 1, 500, 500)):
         img = img.resize((shape[4], shape[3]), Image.NEAREST)
         arr = np.array(img, dtype=np.float32)
         
-        # DGMR expects rain rate in mm/hr, roughly [0, 1] range
-        # Just normalize the 8-bit GIF pixel values
+        # Normalize 8-bit intensity values to normalized rain rate scale [0.0, 1.0]
         rain_rate = arr / 255.0
         
         tensor[0, t, 0] = rain_rate

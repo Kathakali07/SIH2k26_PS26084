@@ -13,13 +13,17 @@ export default function GISMap({ threats, selectedThreat, onSelectThreat }) {
       const map = L.map(mapContainerRef.current, {
         center: [22.65, 88.35],
         zoom: 11,
+        minZoom: 6,
+        maxZoom: 18,
         zoomControl: false
       });
 
       // OpenStreetMap basemap with dark filter (zero API key required)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
+        minZoom: 6,
         maxZoom: 19,
+        noWrap: true,
         className: 'dark-tiles'
       }).addTo(map);
 

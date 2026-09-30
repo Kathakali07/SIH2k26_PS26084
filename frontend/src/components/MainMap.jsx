@@ -40,12 +40,18 @@ export default function MainMap({
       const map = L.map(mapContainerRef.current, {
         center: [46.82, 8.23], // Center of Switzerland
         zoom: 8,
+        minZoom: 6,
+        maxZoom: 18,
+        maxBounds: [[41.0, 1.0], [52.5, 16.0]],
+        maxBoundsViscosity: 0.8,
         zoomControl: false,
       });
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '',
+        minZoom: 6,
         maxZoom: 19,
+        noWrap: true,
         className: 'dark-tiles',
       }).addTo(map);
 
@@ -298,79 +304,82 @@ export default function MainMap({
     <div className="w-full h-full relative">
       <div ref={mapContainerRef} className="w-full h-full bg-[#0a0d14]" />
 
-      {/* Top Left Controls */}
-      <div className="absolute top-4 left-4 z-[400] flex items-center gap-2 pointer-events-auto">
-        <div className="flex items-center gap-2 bg-[#111622]/90 backdrop-blur border border-blue-500/40 text-gray-200 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          Switzerland (MeteoSwiss / DGMR AI)
-        </div>
-
-        {isForecast ? (
-          <div className="flex items-center gap-1.5 bg-purple-900/60 backdrop-blur border border-purple-500/50 text-purple-300 px-2.5 py-1.5 rounded-lg text-xs font-medium shadow-lg animate-pulse">
-            <Sparkles size={13} className="text-purple-400" />
-            DGMR Neural Nowcast (+{offsetMin} min)
+      {/* Top Map Toolbar: Full-width wrapper with pointer-events-none so left & right never block each other */}
+      <div className="absolute top-4 left-4 right-4 z-[400] flex items-center justify-between pointer-events-none gap-2">
+        {/* Top Left Controls */}
+        <div className="flex items-center gap-2 pointer-events-auto shrink-0 flex-wrap">
+          <div className="flex items-center gap-2 bg-[#111622]/90 backdrop-blur border border-blue-500/40 text-gray-200 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="hidden sm:inline">Switzerland (MeteoSwiss / DGMR AI)</span>
+            <span className="sm:hidden">Switzerland</span>
           </div>
-        ) : (
-          <div className="flex items-center gap-1.5 bg-blue-900/40 backdrop-blur border border-blue-500/40 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs font-medium shadow-lg">
-            <Radio size={13} className="text-blue-400" />
-            Doppler Observation {isNow ? '(Live)' : `(${offsetMin}m)`}
-          </div>
-        )}
 
-        {/* Collapsible Layer Selector Button */}
-        <div className="relative">
-          <button
-            onClick={() => setShowLayers(!showLayers)}
-            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border shadow-lg transition-all ${
-              showLayers
-                ? 'bg-blue-600 text-white border-blue-400 shadow-blue-500/20'
-                : 'bg-[#111622]/90 backdrop-blur text-gray-300 border-gray-700/60 hover:text-white hover:bg-gray-800'
-            }`}
-          >
-            <Layers size={13} />
-            <span>Layers ({activeLayers.length})</span>
-            <ChevronDown size={11} className={`transition-transform duration-200 ${showLayers ? 'rotate-180' : ''}`} />
-          </button>
-
-          {showLayers && (
-            <div className="absolute top-full left-0 mt-1.5 bg-[#111622]/95 backdrop-blur-md border border-gray-700/70 rounded-xl p-2 w-[180px] shadow-2xl z-50 animate-in fade-in duration-150">
-              <div className="text-[10px] text-gray-400 font-semibold px-2 py-1 uppercase tracking-wider">Map Layers</div>
-              <div className="flex flex-col gap-1">
-                {layers.map((layer, idx) => {
-                  const isActive = activeLayers.includes(layer.name);
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => toggleLayer(layer.name)}
-                      className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-left transition-all ${
-                        isActive ? 'text-blue-400 bg-[#1e293b]' : 'text-gray-400 hover:bg-[#1e293b]/50 hover:text-white'
-                      }`}
-                    >
-                      <div
-                        className={`flex items-center justify-center w-4 h-4 rounded transition-colors ${
-                          isActive ? 'bg-blue-500 text-white' : 'text-gray-500 border border-gray-600'
-                        }`}
-                      >
-                        {isActive && (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
-                      </div>
-                      {layer.icon}
-                      {layer.name}
-                    </button>
-                  );
-                })}
-              </div>
+          {isForecast ? (
+            <div className="flex items-center gap-1.5 bg-purple-900/60 backdrop-blur border border-purple-500/50 text-purple-300 px-2.5 py-1.5 rounded-lg text-xs font-medium shadow-lg animate-pulse">
+              <Sparkles size={13} className="text-purple-400" />
+              <span>DGMR (+{offsetMin}m)</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-blue-900/40 backdrop-blur border border-blue-500/40 text-blue-300 px-2.5 py-1.5 rounded-lg text-xs font-medium shadow-lg">
+              <Radio size={13} className="text-blue-400" />
+              <span>{isNow ? 'Doppler (Live)' : `Doppler (${offsetMin}m)`}</span>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Top Right Controls: Complete Timeline Player */}
-      <div className="absolute top-4 right-4 z-[400] flex items-center gap-2 pointer-events-auto">
-        <div className="flex items-center gap-2.5 bg-[#111622]/95 backdrop-blur border border-gray-700/60 px-3.5 py-2 rounded-xl text-sm shadow-2xl min-w-[460px]">
+          {/* Collapsible Layer Selector Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowLayers(!showLayers)}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border shadow-lg transition-all ${
+                showLayers
+                  ? 'bg-blue-600 text-white border-blue-400 shadow-blue-500/20'
+                  : 'bg-[#111622]/90 backdrop-blur text-gray-300 border-gray-700/60 hover:text-white hover:bg-gray-800'
+              }`}
+            >
+              <Layers size={13} />
+              <span>Layers ({activeLayers.length})</span>
+              <ChevronDown size={11} className={`transition-transform duration-200 ${showLayers ? 'rotate-180' : ''}`} />
+            </button>
+
+            {showLayers && (
+              <div className="absolute top-full left-0 mt-1.5 bg-[#111622]/95 backdrop-blur-md border border-gray-700/70 rounded-xl p-2 w-[180px] shadow-2xl z-50 animate-in fade-in duration-150">
+                <div className="text-[10px] text-gray-400 font-semibold px-2 py-1 uppercase tracking-wider">Map Layers</div>
+                <div className="flex flex-col gap-1">
+                  {layers.map((layer, idx) => {
+                    const isActive = activeLayers.includes(layer.name);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => toggleLayer(layer.name)}
+                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs text-left transition-all ${
+                          isActive ? 'text-blue-400 bg-[#1e293b]' : 'text-gray-400 hover:bg-[#1e293b]/50 hover:text-white'
+                        }`}
+                      >
+                        <div
+                          className={`flex items-center justify-center w-4 h-4 rounded transition-colors ${
+                            isActive ? 'bg-blue-500 text-white' : 'text-gray-500 border border-gray-600'
+                          }`}
+                        >
+                          {isActive && (
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </div>
+                        {layer.icon}
+                        {layer.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Top Right Controls: Complete Timeline Player */}
+        <div className="flex items-center gap-2 pointer-events-auto shrink min-w-0 max-w-[440px]">
+          <div className="flex items-center gap-2 bg-[#111622]/95 backdrop-blur border border-gray-700/60 px-3 py-1.5 rounded-xl text-xs shadow-2xl w-full">
 
           {/* NOW Button */}
           <button
@@ -486,6 +495,7 @@ export default function MainMap({
           </span>
         </div>
       </div>
+    </div>
 
 
       {/* Zoom Controls */}
