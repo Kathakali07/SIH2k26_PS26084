@@ -22,7 +22,6 @@ import SettingsScreen from './src/screens/SettingsScreen';
 
 import {
   DEFAULT_API_BASE,
-  generateLocalFallbackScenario,
   normalizeStormFeature,
 } from './src/config/api';
 
@@ -34,7 +33,6 @@ export default function App() {
   const [drawerVisible, setDrawerVisible] = useState(false);
 
   const [apiBase, setApiBase] = useState(DEFAULT_API_BASE);
-  const [offlineMode, setOfflineMode] = useState(false);
 
   const [frameIndex, setFrameIndex] = useState(NOW_FRAME_INDEX);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -42,31 +40,22 @@ export default function App() {
 
   const [radarActive, setRadarActive] = useState(true);
   const [selectedStormId, setSelectedStormId] = useState(null);
-  const [scenarioData, setScenarioData] = useState(() =>
-    generateLocalFallbackScenario(NOW_FRAME_INDEX, true)
-  );
+  const [scenarioData, setScenarioData] = useState(null);
 
-  // Fetch or compute scenario for the current frame
+  // Fetch live scenario for current frame directly from backend
   useEffect(() => {
-    if (offlineMode) {
-      setScenarioData(generateLocalFallbackScenario(frameIndex, radarActive));
-      return;
-    }
+    let isCancelled = false;
 
-    const controller = new AbortController();
-    const fetchUrl = `${apiBase}/api/scenario?frame_index=${frameIndex}`;
-
-    fetch(fetchUrl, {
-      signal: controller.signal,
-      headers: { Accept: 'application/json' },
-    })
-      .then((res) => {
+    const fetchScenario = async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/scenario?frame_index=${frameIndex}`, {
+          headers: { Accept: 'application/json' },
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const rawStorms = data?.storms || data?.features || data?.geojson?.features;
-        if (data && Array.isArray(rawStorms) && rawStorms.length > 0) {
+        const data = await res.json();
+
+        if (!isCancelled && data) {
+          const rawStorms = data.storms || data.features || data.geojson?.features || [];
           const normalizedFeatures = rawStorms.map(normalizeStormFeature).filter(Boolean);
           setScenarioData({
             ...data,
@@ -77,18 +66,18 @@ export default function App() {
           } else if (data.sensors && data.sensors.radar) {
             setRadarActive(data.sensors.radar.available);
           }
-        } else {
-          // If shape is different, fall back to local computation
-          setScenarioData(generateLocalFallbackScenario(frameIndex, radarActive));
         }
-      })
-      .catch(() => {
-        // Fallback gracefully on network error
-        setScenarioData(generateLocalFallbackScenario(frameIndex, radarActive));
-      });
+      } catch (err) {
+        // Retain current scenario state on transient network interruption
+      }
+    };
 
-    return () => controller.abort();
-  }, [frameIndex, apiBase, offlineMode, radarActive]);
+    fetchScenario();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [frameIndex, apiBase]);
 
   // Animation playback loop
   useEffect(() => {
@@ -104,16 +93,14 @@ export default function App() {
     const nextState = !radarActive;
     setRadarActive(nextState);
 
-    if (!offlineMode) {
-      try {
-        if (nextState) {
-          await fetch(`${apiBase}/api/reset-demo`, { method: 'POST' });
-        } else {
-          await fetch(`${apiBase}/api/kill-radar`, { method: 'POST' });
-        }
-      } catch (e) {
-        // Handled via local state
+    try {
+      if (nextState) {
+        await fetch(`${apiBase}/api/reset-demo`, { method: 'POST' });
+      } else {
+        await fetch(`${apiBase}/api/kill-radar`, { method: 'POST' });
       }
+    } catch (e) {
+      console.warn('Radar toggle notice:', e.message);
     }
   };
 
@@ -122,12 +109,10 @@ export default function App() {
     setRadarActive(true);
     setFrameIndex(NOW_FRAME_INDEX);
 
-    if (!offlineMode) {
-      try {
-        await fetch(`${apiBase}/api/reset-demo`, { method: 'POST' });
-      } catch (e) {
-        // Handled via local state
-      }
+    try {
+      await fetch(`${apiBase}/api/reset-demo`, { method: 'POST' });
+    } catch (e) {
+      console.warn('System reset notice:', e.message);
     }
   };
 
@@ -192,8 +177,6 @@ export default function App() {
           <SettingsScreen
             apiBase={apiBase}
             onSaveApiBase={setApiBase}
-            offlineMode={offlineMode}
-            setOfflineMode={setOfflineMode}
           />
         );
       default:
@@ -239,7 +222,7 @@ export default function App() {
         activeScreen={activeScreen}
         onSelectScreen={setActiveScreen}
         radarActive={radarActive}
-        apiBase={offlineMode ? 'Offline Simulation' : apiBase}
+        apiBase={apiBase}
       />
     </SafeAreaView>
   );

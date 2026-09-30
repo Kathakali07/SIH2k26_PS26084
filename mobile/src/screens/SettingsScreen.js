@@ -26,8 +26,6 @@ import {
 export default function SettingsScreen({
   apiBase,
   onSaveApiBase,
-  offlineMode,
-  setOfflineMode,
 }) {
   const [customUrl, setCustomUrl] = useState(apiBase);
   const [pingStatus, setPingStatus] = useState(null); // 'checking' | 'ok' | 'error'
@@ -55,7 +53,6 @@ export default function SettingsScreen({
   const handleSelectPreset = (url) => {
     setCustomUrl(url);
     onSaveApiBase(url);
-    setOfflineMode(false);
     testConnection(url);
   };
 
@@ -64,7 +61,7 @@ export default function SettingsScreen({
       <View style={styles.headerBox}>
         <Text style={styles.title}>Settings & API Connection</Text>
         <Text style={styles.subtitle}>
-          Configure your backend nowcasting engine or run in standalone offline presentation mode
+          Configure your backend nowcasting engine target URL
         </Text>
       </View>
 
@@ -79,14 +76,14 @@ export default function SettingsScreen({
         <TouchableOpacity
           style={[
             styles.presetOption,
-            !offlineMode && apiBase === DEFAULT_API_BASE && styles.presetOptionActive,
+            apiBase === DEFAULT_API_BASE && styles.presetOptionActive,
           ]}
           onPress={() => handleSelectPreset(DEFAULT_API_BASE)}
           activeOpacity={0.7}
         >
           <View style={styles.presetTop}>
             <Text style={styles.presetName}>Live Cloud Deployment (Recommended)</Text>
-            {!offlineMode && apiBase === DEFAULT_API_BASE && (
+            {apiBase === DEFAULT_API_BASE && (
               <CheckCircle2 size={16} color="#10b981" />
             )}
           </View>
@@ -100,14 +97,14 @@ export default function SettingsScreen({
         <TouchableOpacity
           style={[
             styles.presetOption,
-            !offlineMode && apiBase === LOCAL_API_BASE && styles.presetOptionActive,
+            apiBase === LOCAL_API_BASE && styles.presetOptionActive,
           ]}
           onPress={() => handleSelectPreset(LOCAL_API_BASE)}
           activeOpacity={0.7}
         >
           <View style={styles.presetTop}>
             <Text style={styles.presetName}>Local Machine (Vite / Dev Server)</Text>
-            {!offlineMode && apiBase === LOCAL_API_BASE && (
+            {apiBase === LOCAL_API_BASE && (
               <CheckCircle2 size={16} color="#10b981" />
             )}
           </View>
@@ -121,36 +118,20 @@ export default function SettingsScreen({
         <TouchableOpacity
           style={[
             styles.presetOption,
-            !offlineMode && apiBase === ANDROID_EMULATOR_API_BASE && styles.presetOptionActive,
+            apiBase === ANDROID_EMULATOR_API_BASE && styles.presetOptionActive,
           ]}
           onPress={() => handleSelectPreset(ANDROID_EMULATOR_API_BASE)}
           activeOpacity={0.7}
         >
           <View style={styles.presetTop}>
             <Text style={styles.presetName}>Android Emulator Loopback</Text>
-            {!offlineMode && apiBase === ANDROID_EMULATOR_API_BASE && (
+            {apiBase === ANDROID_EMULATOR_API_BASE && (
               <CheckCircle2 size={16} color="#10b981" />
             )}
           </View>
           <Text style={styles.presetUrl}>{ANDROID_EMULATOR_API_BASE}</Text>
           <Text style={styles.presetDesc}>
             Routes through the 10.0.2.2 host alias inside the Android Studio emulator
-          </Text>
-        </TouchableOpacity>
-
-        {/* Preset 4: Pure Offline Mode */}
-        <TouchableOpacity
-          style={[styles.presetOption, offlineMode && styles.presetOptionActive]}
-          onPress={() => setOfflineMode(true)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.presetTop}>
-            <Text style={styles.presetName}>Standalone Offline Mode (Zero Network)</Text>
-            {offlineMode && <CheckCircle2 size={16} color="#10b981" />}
-          </View>
-          <Text style={styles.presetUrl}>Embedded Swiss Scenario Engine</Text>
-          <Text style={styles.presetDesc}>
-            100% reliable for stage pitches with poor Wi-Fi; uses built-in DGMR simulation
           </Text>
         </TouchableOpacity>
       </View>
