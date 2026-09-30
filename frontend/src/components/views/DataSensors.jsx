@@ -7,11 +7,13 @@ export default function DataSensors({ setActiveTab }) {
   const [satelliteOffline, setSatelliteOffline] = useState(false);
   const [lightningOffline, setLightningOffline] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_BASE ?? (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:8000' : '');
+
   const handleToggleRadar = async () => {
     const nextState = !radarOffline;
     setRadarOffline(nextState);
     try {
-      await fetch('http://localhost:8000/api/kill-radar', {
+      await fetch(`${API_BASE}/api/kill-radar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ active: !nextState }),
@@ -26,7 +28,7 @@ export default function DataSensors({ setActiveTab }) {
     setSatelliteOffline(false);
     setLightningOffline(false);
     try {
-      await fetch('http://localhost:8000/api/reset-demo', { method: 'POST' });
+      await fetch(`${API_BASE}/api/reset-demo`, { method: 'POST' });
     } catch (e) {
       console.error('Failed to reset demo state:', e);
     }

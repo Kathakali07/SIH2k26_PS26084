@@ -16,7 +16,7 @@ except ImportError:
 app = FastAPI(title="PRAMAAN-X Swiss DGMR Nowcasting API", version="0.4.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -94,7 +94,30 @@ def reset_demo() -> dict[str, Any]:
     return {"radar_active": True, "mode": "dgmr_ai_nowcast", "message": "Demo state reset to online."}
 
 
+# If compiled frontend exists in frontend/dist, serve it directly
+from pathlib import Path
+from fastapi import Request
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+
+dist_dir = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+if dist_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(dist_dir / "assets")), name="assets")
+
+    @app.exception_handler(404)
+    async def spa_404_handler(request: Request, exc: Exception):
+        index_file = dist_dir / "index.html"
+        if not request.url.path.startswith("/api/") and index_file.exists():
+            return FileResponse(index_file)
+        return JSONResponse(status_code=404, content={"detail": "Not Found"})
+
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(dist_dir / "index.html")
+
+
 if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
+

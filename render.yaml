@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: climax-convective-nowcast
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    autoDeploy: true
