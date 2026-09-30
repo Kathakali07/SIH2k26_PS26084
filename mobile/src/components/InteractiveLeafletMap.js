@@ -28,7 +28,7 @@ export default function InteractiveLeafletMap({
       document.head.appendChild(link);
     }
 
-    // 2. Inject Dark Map and Pulse Styles
+    // 2. Inject Dark Map and Pulse Styles (Exact same as web frontend)
     if (!document.getElementById('leaflet-dark-theme-style')) {
       const style = document.createElement('style');
       style.id = 'leaflet-dark-theme-style';
@@ -38,7 +38,14 @@ export default function InteractiveLeafletMap({
           font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
         .dark-tiles {
-          filter: brightness(0.65) invert(1) contrast(3.2) hue-rotate(200deg) saturate(0.25) brightness(0.7) !important;
+          filter: invert(1) hue-rotate(200deg) brightness(0.7) contrast(1.1) saturate(0.3) !important;
+        }
+        .leaflet-overlay-pane,
+        .leaflet-marker-pane,
+        .leaflet-tooltip-pane,
+        .leaflet-popup-pane,
+        .leaflet-shadow-pane {
+          filter: none !important;
         }
         .custom-storm-tooltip {
           background: rgba(10, 15, 29, 0.95) !important;
@@ -77,11 +84,10 @@ export default function InteractiveLeafletMap({
         attributionControl: false,
       });
 
-      // CartoDB Dark Matter Tiles (High-contrast GIS night mode)
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        subdomains: 'abcd',
+      // Free OpenStreetMap Tiles with .dark-tiles filter (Zero API Key, zero watermark)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        className: 'carto-dark-tiles',
+        className: 'dark-tiles',
       }).addTo(map);
 
       mapInstanceRef.current = map;
