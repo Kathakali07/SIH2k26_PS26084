@@ -28,7 +28,7 @@ Use this inventory as the starting point. Do not assume existing components are 
 
 At submission, a judge should be able to:
 
-1. Open a dashboard clearly marked **PRAMAAN-X Prototype / Demo Scenario**.
+1. Open a dashboard clearly marked **ClimaX Prototype / Demo Scenario**.
 2. See the selected scenario, data source/mode, valid time, and sensor status.
 3. View one or more storm objects on an India-centered map.
 4. Select a storm and inspect its state, motion, lifecycle, hazards, and forecast details.
@@ -66,7 +66,7 @@ Build one cohesive dashboard. Prefer a small number of tabs/drawers/panels over 
 
 ### A. Operations overview
 
-- Header: `PRAMAAN-X`, prototype badge, scenario name, current/replay time, mode badge.
+- Header: `ClimaX`, prototype badge, scenario name, current/replay time, mode badge.
 - Sensor strip: Radar, Satellite, Lightning, NWP, plus age/health indicators.
 - Status summary: active storms, highest demo hazard, confidence/product level, data freshness.
 - Main map centered on the selected Indian region (Kolkata by default), with storm polygons/tracks, impact locations, uncertainty zones, and selectable layers.
@@ -236,7 +236,7 @@ Do not add WebSockets, a database, or a message broker unless the basic HTTP flo
 - Add illustrative impact exposure and alert preview.
 - Keep scenario values coherent and deterministic; label simulated probabilities/intervals.
 
-**Gate:** Every major PRAMAAN-X concept has a visible UI representation, even where the underlying capability is simulated.
+**Gate:** Every major ClimaX concept has a visible UI representation, even where the underlying capability is simulated.
 
 ### 08:00–09:00 — Radar failure, replay, and explanation
 
@@ -260,7 +260,7 @@ Do not add WebSockets, a database, or a message broker unless the basic HTTP flo
 
 ### 10:00–11:15 — Slides, evidence, and narrative
 
-- Create architecture diagram and product vision slides from the full PRAMAAN-X specification.
+- Create architecture diagram and product vision slides from the full ClimaX specification.
 - Add a feature status matrix: demonstrated / simulated / planned.
 - Capture genuine screenshots and, if possible, a short backup recording.
 - Include actual input source/provenance and actual verification performed.
@@ -334,7 +334,7 @@ If behind schedule, simplify chart/graph complexity, reduce panel detail, and us
 
 ## 12. Demo script
 
-1. **“This is the PRAMAAN-X prototype scenario.”** Point to mode, source, and valid time.
+1. **“This is the ClimaX prototype scenario.”** Point to mode, source, and valid time.
 2. Select a storm and explain its object state, motion, lifecycle, and which properties are measured versus simulated.
 3. Show the interaction graph and multiple future scenarios as prototype demonstrations.
 4. Switch lead time and explain how the intended product changes from storm track to hazard zone to regional outlook.
@@ -352,7 +352,7 @@ If behind schedule, simplify chart/graph complexity, reduce panel detail, and us
 - A replay sequence is not a verified historical replay unless it enforces data availability time and is evaluated accordingly.
 - A displayed benchmark number must come from a reproducible evaluation; otherwise omit it.
 
-These boundaries make the demo coherent and credible while still letting the UI communicate the complete PRAMAAN-X vision.
+These boundaries make the demo coherent and credible while still letting the UI communicate the complete ClimaX vision.
 
 ## 14. Step-by-step AI-agent execution guide
 
@@ -361,7 +361,7 @@ Use these prompts **one at a time and in order**. Give the AI coding agent the w
 ### Reusable instruction to prepend to every prompt
 
 ```text
-You are working in the existing PRAMAAN-X repository. First inspect the relevant files and follow the current project conventions. Implement only the requested step; do not redesign unrelated parts or claim a simulated capability is real. Preserve working user changes. Keep demo values deterministic and use a shared scenario source of truth. Clearly label measured, calculated, simulated, and unavailable values in the UI. After editing, run the relevant checks available in this repository, report changed files, commands/results, and any remaining issue. Do not begin the next plan step until I review this step.
+You are working in the existing ClimaX repository. First inspect the relevant files and follow the current project conventions. Implement only the requested step; do not redesign unrelated parts or claim a simulated capability is real. Preserve working user changes. Keep demo values deterministic and use a shared scenario source of truth. Clearly label measured, calculated, simulated, and unavailable values in the UI. After editing, run the relevant checks available in this repository, report changed files, commands/results, and any remaining issue. Do not begin the next plan step until I review this step.
 ```
 
 ### Step 1 — Audit the app and establish a runnable baseline (about 20 minutes)
@@ -371,7 +371,7 @@ You are working in the existing PRAMAAN-X repository. First inspect the relevant
 **Give the agent:**
 
 ```text
-Perform a read-only implementation audit for the 12-hour PRAMAAN-X demo. Inspect backend/main.py, backend/engine.py, backend/generate_mock.py, frontend/package.json, frontend/src/App.jsx, frontend/src/components/WeatherMap.jsx, frontend/src/components/GISMap.jsx, and the available data files. Determine exact commands to start frontend/backend and run build/lint. Check whether a real input dataset is present and actually parseable; do not download data or assume .npy files contain plain arrays. Report: (1) startup/build blockers, (2) data format findings, (3) which current UI is displayed and how it is centered, (4) recommended files/sequence for a working demo. Do not edit files.
+Perform a read-only implementation audit for the 12-hour ClimaX demo. Inspect backend/main.py, backend/engine.py, backend/generate_mock.py, frontend/package.json, frontend/src/App.jsx, frontend/src/components/WeatherMap.jsx, frontend/src/components/GISMap.jsx, and the available data files. Determine exact commands to start frontend/backend and run build/lint. Check whether a real input dataset is present and actually parseable; do not download data or assume .npy files contain plain arrays. Report: (1) startup/build blockers, (2) data format findings, (3) which current UI is displayed and how it is centered, (4) recommended files/sequence for a working demo. Do not edit files.
 ```
 
 **Accept when:** We know the actual start commands, whether the input is real or synthetic, and the files that need modification. Resolve startup blockers before adding features.
@@ -383,7 +383,7 @@ Perform a read-only implementation audit for the 12-hour PRAMAAN-X demo. Inspect
 **Give the agent:**
 
 ```text
-Implement the PRAMAAN-X deterministic demo scenario layer. Inspect the existing frontend/backend structure first and choose the simplest shared source of truth that both sides can use reliably (prefer a JSON fixture under an appropriate data or frontend source directory unless the current API architecture makes a Python fixture clearly simpler). Include 3–4 storm objects around West Bengal/Kolkata and at least 5 timestamped replay frames so positions, intensity, lifecycle, and events visibly evolve. Include interactions, hazard cards (lightning, hail, downburst, extreme rain), several weighted forecast futures summing to 100%, lead-time products, sensor health, illustrative impacts, a forecast-change explanation, and an alert preview. Add provenance to every field or group: measured/calculated/simulated/unavailable. Because no validated real dataset/model is guaranteed, label this fixture synthetic_demo and label unsupported values simulated. Make replay values deterministic and internally coherent; radar failure must have a baseline and degraded state with wider uncertainty and a lower forecast product level. Do not add random values generated at runtime. Return the schema and file path when complete.
+Implement the ClimaX deterministic demo scenario layer. Inspect the existing frontend/backend structure first and choose the simplest shared source of truth that both sides can use reliably (prefer a JSON fixture under an appropriate data or frontend source directory unless the current API architecture makes a Python fixture clearly simpler). Include 3–4 storm objects around West Bengal/Kolkata and at least 5 timestamped replay frames so positions, intensity, lifecycle, and events visibly evolve. Include interactions, hazard cards (lightning, hail, downburst, extreme rain), several weighted forecast futures summing to 100%, lead-time products, sensor health, illustrative impacts, a forecast-change explanation, and an alert preview. Add provenance to every field or group: measured/calculated/simulated/unavailable. Because no validated real dataset/model is guaranteed, label this fixture synthetic_demo and label unsupported values simulated. Make replay values deterministic and internally coherent; radar failure must have a baseline and degraded state with wider uncertainty and a lower forecast product level. Do not add random values generated at runtime. Return the schema and file path when complete.
 ```
 
 **Accept when:** One fixture contains the full visible story; repeated loads are identical; no fabricated value is marked measured.
@@ -400,17 +400,17 @@ Implement the minimal FastAPI demo API using the scenario fixture created in Ste
 
 **Accept when:** Scenario, GeoJSON, radar-off, and reset calls work repeatedly and agree with one another.
 
-### Step 4 — Build the PRAMAAN-X operations dashboard shell (about 90 minutes)
+### Step 4 — Build the ClimaX operations dashboard shell (about 90 minutes)
 
 **What to do:** Replace the visible Australia-oriented weather demo with the SIH prototype dashboard while reusing useful existing project styling/components where practical. Prioritize information hierarchy and complete product visibility over decorative animations.
 
 **Give the agent:**
 
 ```text
-Implement the main PRAMAAN-X prototype dashboard UI in the existing React/Vite app. Inspect existing components and styles and reuse useful pieces, but replace the visible Australia-centered WeatherMap/demo content because the SIH scenario is India/Kolkata. Build a responsive dark command-center layout with: PRAMAAN-X/prototype badge; scenario, mode, valid-time/replay-time header; sensor status strip for Radar/Satellite/Lightning/NWP; India-centered map region; storm list; selected storm details; and a right/bottom analysis area that can show the other product panels. Use the Step 2 scenario as data for now if API integration is not yet completed. Do not create unrelated new pages or leave the initial screen showing the old Australia demo. Add loading/error/empty states where relevant. Run frontend build and lint; report any existing warnings separately from new ones.
+Implement the main ClimaX prototype dashboard UI in the existing React/Vite app. Inspect existing components and styles and reuse useful pieces, but replace the visible Australia-centered WeatherMap/demo content because the SIH scenario is India/Kolkata. Build a responsive dark command-center layout with: ClimaX/prototype badge; scenario, mode, valid-time/replay-time header; sensor status strip for Radar/Satellite/Lightning/NWP; India-centered map region; storm list; selected storm details; and a right/bottom analysis area that can show the other product panels. Use the Step 2 scenario as data for now if API integration is not yet completed. Do not create unrelated new pages or leave the initial screen showing the old Australia demo. Add loading/error/empty states where relevant. Run frontend build and lint; report any existing warnings separately from new ones.
 ```
 
-**Accept when:** The first screen communicates PRAMAAN-X, shows India/Kolkata, has the scenario context and space for the full feature set, and builds successfully.
+**Accept when:** The first screen communicates ClimaX, shows India/Kolkata, has the scenario context and space for the full feature set, and builds successfully.
 
 ### Step 5 — Connect map, storm selection, and object intelligence (about 90 minutes)
 
@@ -419,7 +419,7 @@ Implement the main PRAMAAN-X prototype dashboard UI in the existing React/Vite a
 **Give the agent:**
 
 ```text
-Connect the PRAMAAN-X dashboard to GET /api/scenario and GET /api/nowcast/live. Inspect the actual response shape and map library currently installed; do not assume MapLibre is installed just because it appears in the long-term stack. Use the simplest working map approach consistent with the existing dependencies (Leaflet is already used). Render storm polygons/markers and tracks in the India scenario area, add a legend, and make map/list selection synchronize. The selected-storm view must show storm ID, location, area, reflectivity, speed/direction/acceleration, growth/lifecycle, hazards, ETA/interval when supplied, and field provenance badges. Display unsupported or absent measurements as unavailable rather than inventing them. Add refresh/error/stale-data behavior. Verify map coordinates are in [lon, lat] for GeoJSON and correct Leaflet order where applicable. Run build/lint and report the manual API-to-map test steps.
+Connect the ClimaX dashboard to GET /api/scenario and GET /api/nowcast/live. Inspect the actual response shape and map library currently installed; do not assume MapLibre is installed just because it appears in the long-term stack. Use the simplest working map approach consistent with the existing dependencies (Leaflet is already used). Render storm polygons/markers and tracks in the India scenario area, add a legend, and make map/list selection synchronize. The selected-storm view must show storm ID, location, area, reflectivity, speed/direction/acceleration, growth/lifecycle, hazards, ETA/interval when supplied, and field provenance badges. Display unsupported or absent measurements as unavailable rather than inventing them. Add refresh/error/stale-data behavior. Verify map coordinates are in [lon, lat] for GeoJSON and correct Leaflet order where applicable. Run build/lint and report the manual API-to-map test steps.
 ```
 
 **Accept when:** A storm from the API can be selected from either map or list and its panel values/provenance match the API.
@@ -431,7 +431,7 @@ Connect the PRAMAAN-X dashboard to GET /api/scenario and GET /api/nowcast/live. 
 **Give the agent:**
 
 ```text
-Add the remaining PRAMAAN-X product panels using the same scenario response; do not create disconnected random values. Include: (1) storm interaction graph with nodes/edges and relation labels, (2) lead-time selector for 0–60m, 1–3h, 3–6h with product type/precision explanation, (3) multiple-futures display with weights that total 100%, (4) hazard cards for lightning, hail, downburst, and extreme rain, (5) skill/observability gate explaining the displayed product level, (6) replay timeline and event/“why forecast changed” feed, (7) illustrative impact exposure panel for airport/road/village/hospital/school/infrastructure, and (8) alert preview. Every simulated panel/value must have a visible demo/simulated label or a clear global demo-mode legend. Handle small screens by using tabs, collapsible panels, or scrolling rather than removing required features. Verify all panels update from scenario/replay selection rather than maintaining independent values. Run build/lint.
+Add the remaining ClimaX product panels using the same scenario response; do not create disconnected random values. Include: (1) storm interaction graph with nodes/edges and relation labels, (2) lead-time selector for 0–60m, 1–3h, 3–6h with product type/precision explanation, (3) multiple-futures display with weights that total 100%, (4) hazard cards for lightning, hail, downburst, and extreme rain, (5) skill/observability gate explaining the displayed product level, (6) replay timeline and event/“why forecast changed” feed, (7) illustrative impact exposure panel for airport/road/village/hospital/school/infrastructure, and (8) alert preview. Every simulated panel/value must have a visible demo/simulated label or a clear global demo-mode legend. Handle small screens by using tabs, collapsible panels, or scrolling rather than removing required features. Verify all panels update from scenario/replay selection rather than maintaining independent values. Run build/lint.
 ```
 
 **Accept when:** All major features in the product vision are explorable from the UI and consistent with one scenario state.
@@ -455,7 +455,7 @@ Wire the replay controls and Simulate Radar Failure control to the shared scenar
 **Give the agent:**
 
 ```text
-Polish the current PRAMAAN-X dashboard for a live SIH presentation without adding new feature scope. Improve hierarchy, spacing, text contrast, map legend, selected/hover states, loading/error states, compact sensor labels, and responsive behavior. Make measured/calculated/simulated/unavailable legend easy to find. Ensure the judge can locate storm selection, lead-time switch, replay controls, and Simulate Radar Failure quickly. Remove leftover unrelated Australia/NOAA demo labels or placeholder content that conflicts with the Kolkata scenario. Do not add unsupported data claims. Run frontend build and lint and list any remaining visual limitation.
+Polish the current ClimaX dashboard for a live SIH presentation without adding new feature scope. Improve hierarchy, spacing, text contrast, map legend, selected/hover states, loading/error states, compact sensor labels, and responsive behavior. Make measured/calculated/simulated/unavailable legend easy to find. Ensure the judge can locate storm selection, lead-time switch, replay controls, and Simulate Radar Failure quickly. Remove leftover unrelated Australia/NOAA demo labels or placeholder content that conflicts with the Kolkata scenario. Do not add unsupported data claims. Run frontend build and lint and list any remaining visual limitation.
 ```
 
 **Accept when:** A new viewer can understand the dashboard and find the demo controls without explanation.
@@ -467,7 +467,7 @@ Polish the current PRAMAAN-X dashboard for a live SIH presentation without addin
 **Give the agent:**
 
 ```text
-Perform an end-to-end verification of the PRAMAAN-X demo. Inspect the current implementation and run the documented backend and frontend commands from a clean process. Verify: scenario endpoint; valid GeoJSON; map display and storm selection; object details and provenance; all feature panels; replay play/pause/step and synchronized timestamp; radar failure and reset; no-data/API error behavior; frontend production build and lint; backend checks available in the repository. Fix only defects that block the planned demo or create misleading/inconsistent UI. Do not add features. Report each check as pass/fail with command or manual steps, and identify any unverified item.
+Perform an end-to-end verification of the ClimaX demo. Inspect the current implementation and run the documented backend and frontend commands from a clean process. Verify: scenario endpoint; valid GeoJSON; map display and storm selection; object details and provenance; all feature panels; replay play/pause/step and synchronized timestamp; radar failure and reset; no-data/API error behavior; frontend production build and lint; backend checks available in the repository. Fix only defects that block the planned demo or create misleading/inconsistent UI. Do not add features. Report each check as pass/fail with command or manual steps, and identify any unverified item.
 ```
 
 **Accept when:** The full flow works twice from clean startup; failures and remaining unverified behavior are known.
@@ -479,7 +479,7 @@ Perform an end-to-end verification of the PRAMAAN-X demo. Inspect the current im
 **Give the agent:**
 
 ```text
-Using the actual PRAMAAN-X UI and verified implementation, prepare a slide-by-slide PPT outline and a 3–5 minute live demo script. Cover the full vision: storm objects, interaction graph, initiation/intensification, observability/sensor failure, multiple futures, probabilistic ETA, four hazards, lead-time adaptation/skill gate, forecast-change explanation, impacts/alerts, replay/benchmark/ledger, data and architecture workflow. For each capability, clearly classify it as demonstrated from input, calculated prototype behavior, deterministic simulated UI scenario, or roadmap. Include a status matrix and propose which real screenshots we should capture. Do not invent model results, datasets, probabilities as validated values, benchmarks, or sensor integrations. Mark ambitious production capabilities as roadmap when not implemented.
+Using the actual ClimaX UI and verified implementation, prepare a slide-by-slide PPT outline and a 3–5 minute live demo script. Cover the full vision: storm objects, interaction graph, initiation/intensification, observability/sensor failure, multiple futures, probabilistic ETA, four hazards, lead-time adaptation/skill gate, forecast-change explanation, impacts/alerts, replay/benchmark/ledger, data and architecture workflow. For each capability, clearly classify it as demonstrated from input, calculated prototype behavior, deterministic simulated UI scenario, or roadmap. Include a status matrix and propose which real screenshots we should capture. Do not invent model results, datasets, probabilities as validated values, benchmarks, or sensor integrations. Mark ambitious production capabilities as roadmap when not implemented.
 ```
 
 **Accept when:** Slide claims match the app, all vision areas are represented, and a backup screenshot/recording is ready.
@@ -542,7 +542,7 @@ Backend workstream B1: inspect the existing backend and data files before editin
 **Agent prompt:**
 
 ```text
-Backend workstream B2: define the canonical JSON response contract for the PRAMAAN-X prototype. It must cover scenario_id/name/mode/valid_time_utc/data_sources, sensors, forecast_product, storms (with GeoJSON-compatible geometry, measured/calculated/simulated/unavailable provenance), interactions, forecast_members, impacts, replay/events, and radar status. Keep GET /api/nowcast/live compatible as a FeatureCollection whose feature IDs/properties match the scenario storm IDs. Use UTC ISO-8601 timestamps, GeoJSON [longitude, latitude], and probabilities/weights in 0..1. Share the proposed exact schema with me before you implement frontend-dependent changes. Do not populate absent measurements with fake observed values.
+Backend workstream B2: define the canonical JSON response contract for the ClimaX prototype. It must cover scenario_id/name/mode/valid_time_utc/data_sources, sensors, forecast_product, storms (with GeoJSON-compatible geometry, measured/calculated/simulated/unavailable provenance), interactions, forecast_members, impacts, replay/events, and radar status. Keep GET /api/nowcast/live compatible as a FeatureCollection whose feature IDs/properties match the scenario storm IDs. Use UTC ISO-8601 timestamps, GeoJSON [longitude, latitude], and probabilities/weights in 0..1. Share the proposed exact schema with me before you implement frontend-dependent changes. Do not populate absent measurements with fake observed values.
 ```
 
 **Acceptance:** Frontend owner confirms the names/types; one schema is used throughout.
@@ -622,7 +622,7 @@ Use this as the frontend agent's focused task list. The frontend can start its v
 **Agent prompt:**
 
 ```text
-Frontend workstream F1: read-only audit the actual React/Vite application and determine which components App.jsx renders, which map library/dependencies are installed, current CSS approach, and frontend start/build/lint commands. Propose a compact India/Kolkata-centered PRAMAAN-X command-center layout reusing useful components. List exact files to change and risks; do not edit files yet. Do not assume MapLibre is installed or that GISMap.jsx is used by App.jsx.
+Frontend workstream F1: read-only audit the actual React/Vite application and determine which components App.jsx renders, which map library/dependencies are installed, current CSS approach, and frontend start/build/lint commands. Propose a compact India/Kolkata-centered ClimaX command-center layout reusing useful components. List exact files to change and risks; do not edit files yet. Do not assume MapLibre is installed or that GISMap.jsx is used by App.jsx.
 ```
 
 **Acceptance:** We know the active UI, map library, commands, and screen layout before changing code.
@@ -640,7 +640,7 @@ Frontend workstream F1: read-only audit the actual React/Vite application and de
 **Agent prompt:**
 
 ```text
-Frontend workstream F2: implement the PRAMAAN-X dashboard shell in the existing React/Vite app using current dependencies and style conventions. Make the initial screen India/Kolkata-centered rather than Australia-focused. Include header with PRAMAAN-X/prototype badge, scenario/mode/time; Radar/Satellite/Lightning/NWP health strip; summary cards; map and storm list; selected storm detail area; and accessible panels/tabs for interaction graph, forecast futures/lead times, hazards, skill/trust, replay/events, impact, and alert preview. Add a clearly visible legend for measured/calculated/simulated/unavailable. It is okay to use the agreed fixture until backend integration is ready, but no component may invent independent random values. Add loading/error/empty states. Run npm run build and npm run lint and report results.
+Frontend workstream F2: implement the ClimaX dashboard shell in the existing React/Vite app using current dependencies and style conventions. Make the initial screen India/Kolkata-centered rather than Australia-focused. Include header with ClimaX/prototype badge, scenario/mode/time; Radar/Satellite/Lightning/NWP health strip; summary cards; map and storm list; selected storm detail area; and accessible panels/tabs for interaction graph, forecast futures/lead times, hazards, skill/trust, replay/events, impact, and alert preview. Add a clearly visible legend for measured/calculated/simulated/unavailable. It is okay to use the agreed fixture until backend integration is ready, but no component may invent independent random values. Add loading/error/empty states. Run npm run build and npm run lint and report results.
 ```
 
 **Acceptance:** Main dashboard is complete in structure, legible, and starts/builds; old Australia demo is no longer the initial experience.
@@ -662,7 +662,7 @@ Frontend workstream F3: integrate the UI with the backend's agreed schema and lo
 
 **Acceptance:** Storms shown on the map and their details come from the backend response; errors are visible rather than masked.
 
-### Frontend F4 — Fill every PRAMAAN-X concept panel (60–90 minutes)
+### Frontend F4 — Fill every ClimaX concept panel (60–90 minutes)
 
 **Tasks:**
 
@@ -679,7 +679,7 @@ Frontend workstream F3: integrate the UI with the backend's agreed schema and lo
 Frontend workstream F4: complete the visible product panels using only the shared scenario API/fixture. Add a storm interaction graph; 0–60m/1–3h/3–6h selector with product explanation; multiple forecast futures and weights; lightning/hail/downburst/extreme-rain cards; observability and skill-gate status; replay/event/forecast-change panel; illustrative impact exposure layers/cards; and alert preview. Make weights total 100% as supplied by the scenario. All panels must respond to selected storm, current replay frame, and sensor mode as applicable. Label simulated demo outputs directly. Do not claim calibration or real sensor fusion. Keep usable on a laptop presentation screen. Run build/lint.
 ```
 
-**Acceptance:** Each major concept from the PRAMAAN-X feature list has a visible, understandable representation, all fed from shared state.
+**Acceptance:** Each major concept from the ClimaX feature list has a visible, understandable representation, all fed from shared state.
 
 ### Frontend F5 — Replay and Kill Radar interactions (45–60 minutes)
 
@@ -709,7 +709,7 @@ Frontend workstream F5: wire replay controls to scenario frames and the Simulate
 **Agent prompt:**
 
 ```text
-Frontend workstream F6: polish the existing PRAMAAN-X screen for an SIH live presentation. Improve information hierarchy, contrast, spacing, map legend, control discoverability, selected storm state, sensor warnings, and responsive laptop layout. Remove conflicting leftover Australia/NOAA demo copy. Keep all provenance/demo labels visible; do not add unsupported claims or new feature scope. Run npm run build and npm run lint and report any remaining issue.
+Frontend workstream F6: polish the existing ClimaX screen for an SIH live presentation. Improve information hierarchy, contrast, spacing, map legend, control discoverability, selected storm state, sensor warnings, and responsive laptop layout. Remove conflicting leftover Australia/NOAA demo copy. Keep all provenance/demo labels visible; do not add unsupported claims or new feature scope. Run npm run build and npm run lint and report any remaining issue.
 ```
 
 **Acceptance:** A judge can find scenario, storm, hazard, replay, and Kill Radar controls at a glance.

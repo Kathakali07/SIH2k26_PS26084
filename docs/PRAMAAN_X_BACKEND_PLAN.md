@@ -57,7 +57,7 @@ Each storm should include a stable `id`, GeoJSON geometry, position, area, refle
 Prepend this to each task prompt:
 
 ```text
-You are working only on the PRAMAAN-X backend in the existing repository. Inspect relevant files before editing and preserve unrelated work. Implement only this step. Do not claim Earthformer inference or real sensor fusion unless it is actually implemented and running. Use deterministic demo values and explicit provenance. Run relevant backend checks and report changed files, commands/results, and remaining issues. Do not start the next step until I review this one.
+You are working only on the ClimaX backend in the existing repository. Inspect relevant files before editing and preserve unrelated work. Implement only this step. Do not claim Earthformer inference or real sensor fusion unless it is actually implemented and running. Use deterministic demo values and explicit provenance. Run relevant backend checks and report changed files, commands/results, and remaining issues. Do not start the next step until I review this one.
 ```
 
 ## B1 — Audit inputs and startup (20–30 minutes)
@@ -93,7 +93,7 @@ Backend B1 audit: inspect the backend and data files. Determine exact .npy conte
 **Prompt:**
 
 ```text
-Backend B2: define and implement a deterministic scenario fixture for the PRAMAAN-X UI. First agree the exact response schema with the frontend owner. Include scenario metadata/mode/source/time; radar, satellite, lightning, and NWP sensor state; 3–4 storm objects around West Bengal/Kolkata; at least 5 timestamped frames; storm interactions; lead-time products; forecast members with weights summing to 1; four hazard categories; illustrative impacts; events/explanations; alert preview; and field-level provenance. Use synthetic_demo for generated values. Make all frames coherent and deterministic. Do not represent absent measurements as observed. Put the fixture in the simplest maintainable location and report its path/schema.
+Backend B2: define and implement a deterministic scenario fixture for the ClimaX UI. First agree the exact response schema with the frontend owner. Include scenario metadata/mode/source/time; radar, satellite, lightning, and NWP sensor state; 3–4 storm objects around West Bengal/Kolkata; at least 5 timestamped frames; storm interactions; lead-time products; forecast members with weights summing to 1; four hazard categories; illustrative impacts; events/explanations; alert preview; and field-level provenance. Use synthetic_demo for generated values. Make all frames coherent and deterministic. Do not represent absent measurements as observed. Put the fixture in the simplest maintainable location and report its path/schema.
 ```
 
 **Acceptance:** One fixture is shared, deterministic, and sufficient to populate all major UI panels.
@@ -165,7 +165,7 @@ Backend B5: from a clean process, run the backend and verify GET /api/scenario, 
 
 **Final backend handoff:** Start command, local base URL, routes, schema/sample response, chosen data mode/source, radar-off semantics, checks run, known limitations.
 
-**Status: Implemented and smoke-tested.** The documented `python backend/main.py` command was started in a clean process and `/api/health`, `/api/scenario`, `/api/nowcast/live`, radar-off, and reset were exercised over HTTP. Automated checks cover response consistency, coordinate bounds/order and ring closure, validation errors, radar state, reset, and empty FeatureCollection generation. The frontend-facing run/API/schema/sample/provenance/limitations handoff is in `docs/PRAMAAN_X_BACKEND_HANDOFF.md`.
+**Status: Implemented and smoke-tested.** The documented `python backend/main.py` command was started in a clean process and `/api/health`, `/api/scenario`, `/api/nowcast/live`, radar-off, and reset were exercised over HTTP. Automated checks cover response consistency, coordinate bounds/order and ring closure, validation errors, radar state, reset, and empty FeatureCollection generation. The frontend-facing run/API/schema/sample/provenance/limitations handoff is in `docs/ClimaX_X_BACKEND_HANDOFF.md`.
 
 ## Backend priority if time slips
 

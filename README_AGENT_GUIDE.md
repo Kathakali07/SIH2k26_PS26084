@@ -32,7 +32,7 @@ This project enforces a rigorous **Spec-Driven Development** (SDD) framework via
 ### Agent Instructions for OpenSpec:
 If you are an agent joining this project:
 - Check for active changes using the `openspec status` CLI command.
-- If an active change exists (e.g., `init-pramaan-x`), read its `tasks.md` and `design.md` before writing code.
+- If an active change exists (e.g., `init-climax`), read its `tasks.md` and `design.md` before writing code.
 - If you need to make structural changes, ask the user to invoke `/opsx-propose` or `/opsx-update` to formally draft the changes.
 
 ## 4. Environment Setup
