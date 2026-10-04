@@ -28,6 +28,7 @@ export default function LandingPage({ onEnterApp }) {
           <a href="#" className="hover:text-white hover:-translate-y-0.5 hover:text-blue-400 transition-all duration-300">Live Map</a>
           <a href="#" className="hover:text-white hover:-translate-y-0.5 hover:text-blue-400 transition-all duration-300">Our Impact</a>
           <a href="#" className="hover:text-white hover:-translate-y-0.5 hover:text-blue-400 transition-all duration-300">About</a>
+          <a href="#" className="hover:text-white hover:-translate-y-0.5 hover:text-blue-400 transition-all duration-300">Contact Us</a>
         </div>
         <button 
           onClick={onEnterApp}
