@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "ClimaX Nowcast",
+    "slug": "climax-nowcast",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.climax.nowcast"
+    },
+    "android": {
+      "package": "com.climax.nowcast",
+      "adaptiveIcon": {
+        "backgroundColor": "#060b17",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "permissions": [
+        "INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a66d0211-3111-4369-ae53-112b300d5628"
+      }
+    }
+  }
+}
