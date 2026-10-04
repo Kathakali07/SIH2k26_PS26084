@@ -15,7 +15,6 @@ import MultipleFutures from './components/views/MultipleFutures';
 import HistoricalReplay from './components/views/HistoricalReplay';
 import DataSensors from './components/views/DataSensors';
 import Alerts from './components/views/Alerts';
-import SettingsView from './components/views/SettingsView';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://sih2k26-ps26084.onrender.com';
 const TOTAL_FRAMES = 38;
@@ -23,7 +22,6 @@ const NOW_FRAME_INDEX = 19; // Frame 19 is T+0 'NOW' (dividing observed from DGM
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('Landing Page');
-  const [settingsTab, setSettingsTab] = useState('General');
   const [geoData, setGeoData] = useState(null);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -173,8 +171,6 @@ export default function App() {
         return <DataSensors setActiveTab={setActiveTab} />;
       case 'Alerts':
         return <Alerts storms={storms} setActiveTab={setActiveTab} />;
-      case 'Settings':
-        return <SettingsView activeTab={settingsTab} setActiveTab={setSettingsTab} />;
       default:
         return (
           <div className="flex-1 flex items-center justify-center text-gray-500">
@@ -186,7 +182,7 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen bg-[#070b14] text-gray-300 flex flex-col font-sans overflow-hidden select-none">
-      <Header setActiveTab={setActiveTab} setSettingsTab={setSettingsTab} />
+      <Header setActiveTab={setActiveTab} />
       <div className="flex-1 flex overflow-hidden p-3 gap-3 min-h-0">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
         <div className="flex-1 overflow-hidden min-h-0 flex flex-col">
