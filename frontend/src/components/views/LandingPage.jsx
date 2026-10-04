@@ -25,6 +25,7 @@ const TEAM_MEMBERS = [
   },
   {
     name: 'Rabi Shankar Roy',
+    email: 'rabishankarroy04@gmail.com',
     linkedin: 'https://www.linkedin.com/in/rabishankar-roy-055a52343/',
   },
   {
