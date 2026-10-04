@@ -60,7 +60,7 @@ export default function BottomPanel({ storms = [] }) {
     <div className="w-full h-full flex gap-3 select-none">
 
       {/* ── CARD 1: STORM EVOLUTION ── */}
-      <div className="flex-1 bg-[#0c111d]/90 backdrop-blur-md rounded-xl border border-gray-800/60 p-3.5 flex flex-col justify-between hover:border-gray-700/60 transition-all shadow-xl">
+      <div className="flex-1 bg-[#0c111d]/90 backdrop-blur-md rounded-xl border border-gray-800/60 p-3.5 flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(37,99,235,0.15)] hover:border-blue-500/30 transition-all duration-300 shadow-xl animate-fade-up delay-300">
         <div>
           {/* Header */}
           <div className="flex justify-between items-center mb-2">
@@ -166,7 +166,7 @@ export default function BottomPanel({ storms = [] }) {
       </div>
 
       {/* ── CARD 2: MULTIPLE POSSIBLE FUTURES (DGMR ENSEMBLE) ── */}
-      <div className="flex-1 bg-[#0c111d]/90 backdrop-blur-md rounded-xl border border-gray-800/60 p-3.5 flex flex-col justify-between hover:border-gray-700/60 transition-all shadow-xl overflow-hidden">
+      <div className="flex-1 bg-[#0c111d]/90 backdrop-blur-md rounded-xl border border-gray-800/60 p-3.5 flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(37,99,235,0.15)] hover:border-purple-500/30 transition-all duration-300 shadow-xl overflow-hidden animate-fade-up delay-400">
         <div>
           {/* Header */}
           <div className="flex justify-between items-center mb-1">
@@ -201,7 +201,7 @@ export default function BottomPanel({ storms = [] }) {
         </div>
 
         {/* Dynamic SVG Plume & 16-Member Trajectory Fan */}
-        <div className="h-[68px] w-full relative rounded-lg border border-gray-800/60 bg-[#070b14] overflow-hidden">
+        <div className="h-[51px] w-full relative rounded-lg border border-gray-800/60 bg-[#070b14] overflow-hidden">
           <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" className="absolute inset-0">
             {/* Soft grid lines */}
             <line x1="0" y1="25" x2="100" y2="25" stroke="#172033" strokeWidth="0.3" strokeDasharray="2 2" />
@@ -248,7 +248,7 @@ export default function BottomPanel({ storms = [] }) {
       </div>
 
       {/* ── CARD 3: INTENSITY FORECAST ── */}
-      <div className="flex-1 bg-[#0c111d]/90 backdrop-blur-md rounded-xl border border-gray-800/60 p-3.5 flex flex-col justify-between hover:border-gray-700/60 transition-all shadow-xl overflow-hidden">
+      <div className="flex-1 bg-[#0c111d]/90 backdrop-blur-md rounded-xl border border-gray-800/60 p-3.5 flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(37,99,235,0.15)] hover:border-amber-500/30 transition-all duration-300 shadow-xl overflow-hidden animate-fade-up delay-500">
         <div>
           {/* Header */}
           <div className="flex justify-between items-center mb-1">
@@ -282,7 +282,7 @@ export default function BottomPanel({ storms = [] }) {
         </div>
 
         {/* Clean Line/Area Chart */}
-        <div className="h-[68px] w-full">
+        <div className="h-[51px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={intensityData} margin={{ top: 2, right: 6, left: -28, bottom: -6 }}>
               <CartesianGrid strokeDasharray="2 2" stroke="#172033" vertical={false} />

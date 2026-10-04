@@ -19,29 +19,34 @@ const TEAM_MEMBERS = [
     github: 'https://github.com/puitandysatyam',
   },
   {
-    name: 'Kathakali KD',
+    name: 'Kathakali Das',
     email: '2004kathakali@gmail.com',
     linkedin: 'https://www.linkedin.com/in/kathakali-kd-46a93623b/',
     github: 'https://github.com/Kathakali07',
   },
   {
-    name: 'Rabi Shankar Roy',
+    name: 'Rabishankar Roy',
     email: 'rabishankarroy04@gmail.com',
     linkedin: 'https://www.linkedin.com/in/rabishankar-roy-055a52343/',
+    github: 'https://github.com/rabishankarroy04-svg',
   },
   {
     name: 'Subhankar Nath',
     email: 'nathsubhankar57@gmail.com',
     linkedin: 'https://www.linkedin.com/in/subhankar-nath-674998325/',
+    github: 'https://github.com/subhankar235',
   },
   {
     name: 'Anamika Pathak',
     email: 'anamikapathak587@gmail.com',
     linkedin: 'https://www.linkedin.com/in/anamika-pathak-bb60a2325/',
+    github: 'https://github.com/Anamika902',
   },
   {
     name: 'Anindito Patra',
+    email: 'patraanindito@gmail.com',
     linkedin: 'https://www.linkedin.com/in/anindito-patra-260701323/',
+    github: 'https://github.com/Anindito05'
   },
 ];
 
@@ -114,40 +119,44 @@ export default function LandingPage({ page = 'Landing Page', onNavigate, onEnter
 
       {page === 'About' ? (
         <main className="relative z-20 flex-1 flex items-center px-6 sm:px-16 animate-fade-up">
-          <section className="w-full max-w-4xl rounded-3xl border border-blue-400/20 bg-[#080e1a]/85 p-7 sm:p-12 shadow-2xl backdrop-blur-md">
-            <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-blue-300">About ClimaX</p>
-            <h1 className="mb-5 text-4xl font-extrabold leading-tight sm:text-5xl">Understand storms.<br /><span className="text-blue-300">Prepare with clarity.</span></h1>
-            <p className="max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
+          <section className="w-full max-w-4xl rounded-3xl border border-blue-400/20 bg-[#080e1a]/85 p-7 sm:p-12 shadow-2xl backdrop-blur-md hover:-translate-y-2 hover:border-blue-500/40 hover:shadow-[0_15px_40px_rgba(37,99,235,0.15)] transition-all duration-500 group">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-blue-300 animate-fade-up delay-100">About ClimaX</p>
+            <h1 className="mb-5 text-4xl font-extrabold leading-tight sm:text-5xl animate-fade-up delay-200">
+              Understand storms.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 group-hover:from-blue-300 group-hover:to-purple-300 transition-colors duration-500">Prepare with clarity.</span>
+            </h1>
+            <p className="max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg animate-fade-up delay-300">
               ClimaX is a storm-monitoring and nowcasting prototype that brings storm tracks, hazard views, scenario ensembles, and impact-risk tools together in one interface.
             </p>
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-400">
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-400 animate-fade-up delay-400">
               This project is a demonstration. Its scenario and forecast values are simulated and should not be used as official weather warnings.
             </p>
-            <button type="button" onClick={onEnterApp} className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-500">
-              Explore the demo <ArrowRight size={16} />
-            </button>
+            <div className="animate-fade-up delay-500">
+              <button 
+                type="button" 
+                onClick={onEnterApp} 
+                className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-all duration-300 hover:bg-blue-500 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(37,99,235,0.5)] group/btn"
+              >
+                Explore the demo <ArrowRight size={16} className="group-hover/btn:translate-x-1 transition-transform" />
+              </button>
+            </div>
           </section>
         </main>
       ) : (
       <>
       {/* Hero Section */}
-      <main className="relative z-20 flex-1 flex flex-col lg:flex-row items-center justify-between px-6 py-12 sm:px-16 sm:py-16 w-full max-w-7xl mx-auto">
-        <div className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 bg-blue-950/60 border border-blue-500/40 rounded-full px-3.5 py-1 text-xs text-blue-300 w-fit mb-4 backdrop-blur animate-fade-up">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            DeepMind DGMR Neural Convective Nowcasting System &bull; Swiss Radar Composite
-          </div>
-
-          <h1 className="text-4xl font-extrabold leading-tight mb-5 tracking-tight sm:text-6xl animate-fade-up delay-100">
+      <main className="relative z-20 flex-1 flex flex-col md:flex-row items-center justify-between px-6 pt-4 pb-12 sm:px-16 sm:pt-4 sm:pb-16 w-full max-w-[1440px] mx-auto gap-10">
+        <div className="w-full md:w-1/2 flex flex-col justify-center">
+          <h1 className="text-4xl font-extrabold leading-tight mb-5 tracking-tight sm:text-5xl lg:text-6xl animate-fade-up delay-100">
             From Storms <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">
               to Safer Tomorrows
             </span>
           </h1>
-          <p className="text-gray-300 text-base mb-8 max-w-2xl leading-relaxed sm:text-lg animate-fade-up delay-200">
+          <p className="text-gray-300 text-base mb-8 max-w-xl leading-relaxed sm:text-lg animate-fade-up delay-200">
             Operational deep generative AI nowcasting for severe thunderstorms, large hail, destructive downbursts, and flash cloudbursts with spatio-temporal uncertainty quantification.
           </p>
-          <div className="flex gap-4 animate-fade-up delay-300">
+          <div className="flex flex-wrap gap-4 animate-fade-up delay-300">
             <button 
               onClick={onEnterApp}
               className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-full font-bold flex items-center gap-2 hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] hover:-translate-y-1 transition-all duration-300 group text-sm"
@@ -162,7 +171,7 @@ export default function LandingPage({ page = 'Landing Page', onNavigate, onEnter
             </button>
           </div>
         </div>
-        <div className="hidden lg:flex flex-1 justify-end items-center relative animate-fade-up delay-400">
+        <div className="w-full md:w-1/2 flex justify-center md:justify-end items-center relative animate-fade-up delay-400">
           <EarthGlobe />
         </div>
       </main>
@@ -170,10 +179,10 @@ export default function LandingPage({ page = 'Landing Page', onNavigate, onEnter
       {/* Bottom Features */}
       <div className="relative z-20 px-6 pb-10 flex flex-col gap-6 sm:flex-row sm:px-16">
         {[
-          { icon: '🌩️', title: 'Storm-as-an-Object\nTracking', desc: 'Objectified cell kinematics & lifecycle stages', page: 'Storm Objects' },
-          { icon: '🔮', title: 'Multiple Possible\nFutures', desc: '16 DGMR Monte Carlo generative ensemble tracks', page: 'Multiple Futures' },
-          { icon: '🎯', title: 'Hazard-Specific\nForecasting', desc: 'Discrete probabilities for Hail, Rain, Shear & Lightning', page: 'Hazard Forecast' },
-          { icon: '🛡️', title: 'Impact Risk &\nCritical Assets', desc: 'Vulnerability mapping for airports, highways & dams', page: 'Impact Risk' }
+          {  title: 'Storm-as-an-Object\nTracking', desc: 'Objectified cell kinematics & lifecycle stages', page: 'Storm Objects' },
+          {  title: 'Multiple Possible\nFutures', desc: '16 DGMR Monte Carlo generative ensemble tracks', page: 'Multiple Futures' },
+          {  title: 'Hazard-Specific\nForecasting', desc: 'Discrete probabilities for Hail, Rain, Shear & Lightning', page: 'Hazard Forecast' },
+          {  title: 'Impact Risk &\nCritical Assets', desc: 'Vulnerability mapping for airports, highways & dams', page: 'Impact Risk' }
         ].map((feat, i) => (
           <button
             type="button"

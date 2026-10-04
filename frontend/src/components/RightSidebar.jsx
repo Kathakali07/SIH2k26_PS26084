@@ -48,10 +48,10 @@ export default function RightSidebar({ setActiveTab, storms, selectedStormId, on
   };
 
   return (
-    <div className="h-full flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-2">
+    <div className="h-full flex flex-col gap-3 overflow-y-auto custom-scrollbar pr-2 animate-fade-up delay-200">
 
       {/* Active Storms */}
-      <div className="bg-[#111622] rounded-xl border border-gray-800/60 p-4 flex-shrink-0">
+      <div className="bg-[#111622] rounded-xl border border-gray-800/60 p-4 flex-shrink-0 hover:border-blue-500/30 transition-colors">
         <div className="flex justify-between items-center mb-3">
           <h3 className="text-sm font-semibold text-gray-200">Active Storms ({activeStorms.length})</h3>
           <button
@@ -74,10 +74,10 @@ export default function RightSidebar({ setActiveTab, storms, selectedStormId, on
                   onStormSelect?.(storm.id);
                   setActiveTab && setActiveTab('Storm Objects');
                 }}
-                className={`group flex items-center gap-3 rounded-lg p-2 border transition-all cursor-pointer ${
+                className={`group flex items-center gap-3 rounded-lg p-2 border transition-all duration-300 cursor-pointer ${
                   isSelected
-                    ? 'bg-[#20293f] border-blue-500/80 shadow-md shadow-blue-500/20'
-                    : 'bg-[#1a2133] border-gray-700/50 hover:bg-[#20293f] hover:border-blue-500/50'
+                    ? 'bg-[#20293f] border-blue-500/80 shadow-[0_0_15px_rgba(37,99,235,0.2)] -translate-x-1'
+                    : 'bg-[#1a2133] border-gray-700/50 hover:bg-[#20293f] hover:border-blue-500/50 hover:-translate-x-1 hover:shadow-[0_4px_20px_rgba(37,99,235,0.1)]'
                 }`}
               >
                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${storm.numClass}`}>

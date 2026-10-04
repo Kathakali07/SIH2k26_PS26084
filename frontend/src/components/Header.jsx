@@ -40,14 +40,14 @@ export default function Header({ setActiveTab }) {
   };
 
   return (
-    <div className="w-full h-[70px] flex items-center justify-between px-6 bg-[#070b14] border-b border-gray-800/50 shrink-0 relative z-[500] select-none">
+    <div className="w-full h-[52px] flex items-center justify-between px-6 bg-[#070b14] border-b border-gray-800/50 shrink-0 relative z-[500] select-none animate-fade-up">
       <div className="flex items-center gap-8">
         {/* Logo Area */}
         <div 
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-3 cursor-pointer group hover:-translate-y-0.5 transition-transform duration-300"
           onClick={() => setActiveTab('Landing Page')}
         >
-          <div className="w-8 h-8 text-blue-500 group-hover:text-blue-400 transition-colors">
+          <div className="w-8 h-8 text-blue-500 group-hover:scale-110 group-hover:rotate-90 group-hover:text-blue-400 transition-all duration-500 animate-pulse-glow">
             {/* Custom Star/Asterisk Logo */}
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
               <path d="M12 0l2.5 8.5L23 12l-8.5 2.5L12 24l-2.5-8.5L1 12l8.5-2.5z" />
@@ -77,7 +77,7 @@ export default function Header({ setActiveTab }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setIsSearchFocused(true)}
             placeholder="Search Swiss location (Zurich, Gotthard, Basel...)" 
-            className="w-[300px] bg-[#111622] text-xs text-gray-200 placeholder-gray-500 rounded-full py-2 pl-10 pr-8 border border-gray-700/60 focus:outline-none focus:border-blue-500/80 transition-all shadow-inner"
+            className="w-[225px] bg-[#111622] text-xs text-gray-200 placeholder-gray-500 rounded-full py-2 pl-10 pr-8 border border-gray-700/60 focus:outline-none focus:border-blue-500/80 transition-all shadow-inner"
           />
           {searchQuery && (
             <button
@@ -90,7 +90,7 @@ export default function Header({ setActiveTab }) {
 
           {/* Autocomplete Dropdown */}
           {isSearchFocused && (
-            <div className="absolute left-0 top-full mt-2 w-[340px] bg-[#111622]/95 backdrop-blur-md rounded-xl border border-gray-700/80 shadow-2xl p-2 z-[9999] animate-in fade-in duration-150">
+            <div className="absolute left-0 top-full mt-2 w-[255px] bg-[#111622]/95 backdrop-blur-md rounded-xl border border-gray-700/80 shadow-2xl p-2 z-[9999] animate-in fade-in duration-150">
               <div className="text-[10px] text-gray-400 font-bold px-2 py-1 uppercase tracking-wider">
                 Swiss Monitored Nodes ({filteredLocations.length})
               </div>

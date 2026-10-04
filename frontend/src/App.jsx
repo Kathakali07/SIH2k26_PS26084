@@ -90,6 +90,18 @@ export default function App() {
     };
   }, [frameIndex, activeTab]);
 
+  // Dynamically scale root font size based on current view
+  useEffect(() => {
+    if (['Landing Page', 'About'].includes(activeTab)) {
+      document.documentElement.style.fontSize = '16px';
+    } else {
+      document.documentElement.style.fontSize = '12px';
+    }
+    return () => {
+      document.documentElement.style.fontSize = '';
+    };
+  }, [activeTab]);
+
   // Animation loop: advance frame smoothly when playing
   useEffect(() => {
     if (!isPlaying) return;
@@ -117,7 +129,7 @@ export default function App() {
         return (
           <div className="flex-1 flex gap-3 overflow-hidden min-h-0">
             <div className="flex-1 flex flex-col gap-3 overflow-hidden min-h-0">
-              <div className="flex-1 relative rounded-xl overflow-hidden border border-gray-800/60 shadow-lg shadow-black/20 min-h-[320px]">
+              <div className="flex-1 relative rounded-xl overflow-hidden border border-gray-800/60 shadow-lg shadow-black/20 min-h-[240px]">
                 <MainMap
                   geoData={geoData}
                   onStormSelect={setSelectedStormId}
@@ -132,11 +144,11 @@ export default function App() {
                   setPlaybackSpeed={setPlaybackSpeed}
                 />
               </div>
-              <div className="h-[195px] flex gap-3 overflow-hidden shrink-0">
+              <div className="h-[146px] flex gap-3 overflow-hidden shrink-0">
                 <BottomPanel storms={storms} />
               </div>
             </div>
-            <div className="w-[320px] flex-shrink-0 flex flex-col gap-3 overflow-hidden min-h-0">
+            <div className="w-[240px] flex-shrink-0 flex flex-col gap-3 overflow-hidden min-h-0">
               <RightSidebar
                 setActiveTab={setActiveTab}
                 storms={storms}

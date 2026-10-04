@@ -120,7 +120,7 @@ export default function HazardForecast() {
              </div>
            </div>
 
-           <div className="h-[200px] flex flex-col">
+           <div className="h-[150px] flex flex-col">
              <h3 className="text-sm font-semibold text-gray-300 mb-2">Probability over time</h3>
              <div className="flex-1 w-full">
                 <ResponsiveContainer width="100%" height="100%">

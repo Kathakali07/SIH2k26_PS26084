@@ -103,7 +103,7 @@ export default function StormObjectDetail() {
       </div>
 
       {/* Bottom Area */}
-      <div className="h-[120px] flex gap-3 shrink-0">
+      <div className="h-[90px] flex gap-3 shrink-0">
          <div className="flex-[3] bg-[#111622] rounded-xl border border-gray-800/60 p-4 flex flex-col">
             <h3 className="text-sm font-semibold text-gray-200 mb-2">Lifecycle Timeline</h3>
             <div className="flex-1 relative flex items-center px-8">
