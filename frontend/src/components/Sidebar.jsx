@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, CloudLightning, ShieldAlert, AlertTriangle, Zap, Activity, History, Database, Bell, Settings } from 'lucide-react';
+import { Home, CloudLightning, ShieldAlert, AlertTriangle, Zap, Activity, History, Database, Bell } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab }) {
   const menuItems = [
@@ -12,7 +12,6 @@ export default function Sidebar({ activeTab, setActiveTab }) {
     { icon: <History size={18} />, label: 'Historical Replay' },
     { icon: <Database size={18} />, label: 'Data & Sensors' },
     { icon: <Bell size={18} />, label: 'Alerts' },
-    { icon: <Settings size={18} />, label: 'Settings' },
   ];
 
   const systemStatus = [

@@ -1,11 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, User, Settings, LogOut, MapPin, ChevronRight, X } from 'lucide-react';
+import { Search, MapPin, ChevronRight, X } from 'lucide-react';
 
-export default function Header({ setActiveTab, setSettingsTab }) {
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+export default function Header({ setActiveTab }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const dropdownRef = useRef(null);
   const searchRef = useRef(null);
 
   const swissLocations = [
@@ -25,9 +23,6 @@ export default function Header({ setActiveTab, setSettingsTab }) {
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsProfileOpen(false);
-      }
       if (searchRef.current && !searchRef.current.contains(event.target)) {
         setIsSearchFocused(false);
       }
@@ -131,63 +126,10 @@ export default function Header({ setActiveTab, setSettingsTab }) {
           <span className="text-xs font-semibold text-emerald-400">Live</span>
         </div>
         
-        {/* Authentic Swiss / CET Timestamp */}
-        <div className="text-xs text-gray-400 font-medium flex items-center gap-2 relative">
+        {/* Demo timestamp */}
+        <div className="text-xs text-gray-400 font-medium flex items-center gap-2">
           <span className="font-mono text-gray-300">20:45 UTC</span>
           <span className="text-gray-500 text-[11px]">(22:45 CEST Switzerland)</span>
-          
-          <div className="relative ml-2" ref={dropdownRef}>
-            <button 
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="w-8 h-8 rounded-full bg-blue-900/50 hover:bg-blue-800/80 border border-blue-500/30 flex items-center justify-center text-blue-300 font-bold transition-colors shadow-lg cursor-pointer"
-            >
-              SN
-            </button>
-
-            {/* Profile Dropdown */}
-            {isProfileOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-[#111622] rounded-xl border border-gray-700 shadow-2xl py-2 animate-in fade-in slide-in-from-top-2 duration-200 z-[9999]">
-                <div className="px-4 py-2 border-b border-gray-800 mb-1">
-                  <p className="text-sm font-medium text-gray-200">Subhasis Nandi</p>
-                  <p className="text-xs text-gray-500 truncate">admin@meteorology.gov</p>
-                </div>
-                
-                <button 
-                  onClick={() => {
-                    if (setSettingsTab) setSettingsTab('Account');
-                    setActiveTab('Settings');
-                    setIsProfileOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#1a2133] hover:text-white transition-colors"
-                >
-                  <User size={14} /> My Profile
-                </button>
-                
-                <button 
-                  onClick={() => {
-                    if (setSettingsTab) setSettingsTab('Account');
-                    setActiveTab('Settings');
-                    setIsProfileOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-[#1a2133] hover:text-white transition-colors"
-                >
-                  <Settings size={14} /> Account Settings
-                </button>
-                
-                <div className="h-[1px] bg-gray-800 my-1 w-full"></div>
-                
-                <button 
-                  onClick={() => {
-                    setActiveTab('Landing Page');
-                    setIsProfileOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                >
-                  <LogOut size={14} /> Log out
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
