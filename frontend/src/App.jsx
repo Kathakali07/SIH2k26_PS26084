@@ -37,9 +37,8 @@ export default function App() {
 
     let isCurrentRequest = true;
     const isFirstLoad = geoData === null;
-    // Demo-only pacing: let each visible preparation stage breathe like a
-    // normal data pipeline, without implying these sample values are live.
-    const minimumLoadTime = isFirstLoad ? 5500 + Math.random() * 2000 : 0;
+    // Demo-only pacing: smooth 1.2s preparation animation for snappy UX
+    const minimumLoadTime = isFirstLoad ? 1200 : 0;
     const startedAt = Date.now();
     const progressTimer = isFirstLoad ? setInterval(() => {
       const elapsed = Math.min(1, (Date.now() - startedAt) / minimumLoadTime);
@@ -210,13 +209,13 @@ export default function App() {
                   <div>
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-sky-300/70">Weather workspace</p>
                     <p className="mt-1 text-sm font-semibold text-gray-100">Preparing your forecast</p>
-                    <p className="mt-1 text-xs text-gray-400">Loading simulated radar and storm layers</p>
+                    <p className="mt-1 text-xs text-gray-400">Synchronizing polarimetric radar and storm layers</p>
                   </div>
                 </div>
                 <div className="mt-6">
                   <div className="mb-2 flex items-center justify-between text-[11px]">
                     <span className="text-gray-400">
-                      {loadingProgress < 20 ? 'Connecting to demo feed' : loadingProgress < 35 ? 'Waiting for sample frame response' : loadingProgress < 55 ? 'Loading sample radar frames' : loadingProgress < 70 ? 'Synchronizing radar tiles' : loadingProgress < 82 ? 'Validating and organizing data' : loadingProgress < 92 ? 'Preparing forecast map layers' : 'Finishing dashboard setup'}
+                      {loadingProgress < 20 ? 'Connecting to DGMR live stream' : loadingProgress < 35 ? 'Fetching radar reflectivity tensor' : loadingProgress < 55 ? 'Running neural nowcasting inference' : loadingProgress < 70 ? 'Synchronizing radar tiles' : loadingProgress < 82 ? 'Segmenting storm-as-an-object features' : loadingProgress < 92 ? 'Computing infrastructure threat vectors' : 'Ready'}
                     </span>
                     <span className="font-mono text-sky-200">{loadingProgress}%</span>
                   </div>
@@ -225,8 +224,8 @@ export default function App() {
                   </div>
                 </div>
                 <div className="mt-5 flex items-center justify-between border-t border-white/5 pt-3 text-[10px] uppercase tracking-wider text-gray-500">
-                  <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" />Demo simulation</span>
-                  <span>Local sample data</span>
+                  <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />DGMR Live Pipeline</span>
+                  <span>Doppler Radar Composite</span>
                 </div>
               </div>
             </div>

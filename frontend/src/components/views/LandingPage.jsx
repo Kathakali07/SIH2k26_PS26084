@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Play, ArrowRight, Mail } from 'lucide-react';
+import { Play, ArrowRight, Mail, CloudLightning, Activity, ShieldAlert, AlertTriangle } from 'lucide-react';
 import EarthGlobe from './EarthGlobe';
 
 const NAV_ITEMS = [
@@ -179,10 +179,10 @@ export default function LandingPage({ page = 'Landing Page', onNavigate, onEnter
       {/* Bottom Features */}
       <div className="relative z-20 px-6 pb-10 flex flex-col gap-6 sm:flex-row sm:px-16">
         {[
-          {  title: 'Storm-as-an-Object\nTracking', desc: 'Objectified cell kinematics & lifecycle stages', page: 'Storm Objects' },
-          {  title: 'Multiple Possible\nFutures', desc: '16 DGMR Monte Carlo generative ensemble tracks', page: 'Multiple Futures' },
-          {  title: 'Hazard-Specific\nForecasting', desc: 'Discrete probabilities for Hail, Rain, Shear & Lightning', page: 'Hazard Forecast' },
-          {  title: 'Impact Risk &\nCritical Assets', desc: 'Vulnerability mapping for airports, highways & dams', page: 'Impact Risk' }
+          { icon: <CloudLightning className="text-blue-400" size={28} />, title: 'Storm-as-an-Object\nTracking', desc: 'Objectified cell kinematics & lifecycle stages', page: 'Storm Objects' },
+          { icon: <Activity className="text-purple-400" size={28} />, title: 'Multiple Possible\nFutures', desc: '16 DGMR Monte Carlo generative ensemble tracks', page: 'Multiple Futures' },
+          { icon: <ShieldAlert className="text-amber-400" size={28} />, title: 'Hazard-Specific\nForecasting', desc: 'Discrete probabilities for Hail, Rain, Shear & Lightning', page: 'Hazard Forecast' },
+          { icon: <AlertTriangle className="text-red-400" size={28} />, title: 'Impact Risk &\nCritical Assets', desc: 'Vulnerability mapping for airports, highways & dams', page: 'Impact Risk' }
         ].map((feat, i) => (
           <button
             type="button"

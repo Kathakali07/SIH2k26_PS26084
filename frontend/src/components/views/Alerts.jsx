@@ -1,162 +1,252 @@
 import React, { useState } from 'react';
-import { Bell, AlertTriangle, ShieldAlert, Zap, CloudHail, Wind, CheckCircle2, Filter, Search } from 'lucide-react';
+import { Bell, AlertTriangle, ShieldAlert, Zap, CloudHail, Wind, CheckCircle2, Filter, Search, MapPin, Radio, Send, Eye, Check } from 'lucide-react';
 
-export default function Alerts() {
+export default function Alerts({ storms = [], setActiveTab }) {
   const [activeFilter, setActiveFilter] = useState('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState(null);
 
-  const alerts = [
-    { id: 'ALT-104', type: 'Extreme Rain', location: 'Kolkata (North)', time: '10 min ago', severity: 'Critical', status: 'Active', icon: <AlertTriangle size={18} />, color: 'text-red-500', bgColor: 'bg-red-500/10' },
-    { id: 'ALT-103', type: 'Lightning Strike', location: 'Ranchi Suburbs', time: '45 min ago', severity: 'High', status: 'Active', icon: <Zap size={18} />, color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
-    { id: 'ALT-102', type: 'Severe Hail', location: 'Bhubaneswar', time: '2 hours ago', severity: 'High', status: 'Resolved', icon: <CloudHail size={18} />, color: 'text-gray-500', bgColor: 'bg-gray-800' },
-    { id: 'ALT-101', type: 'Downburst', location: 'Patna Airport', time: '5 hours ago', severity: 'Moderate', status: 'Resolved', icon: <Wind size={18} />, color: 'text-gray-500', bgColor: 'bg-gray-800' },
-    { id: 'SYS-042', type: 'System', location: 'Radar Node 4', time: '1 day ago', severity: 'Warning', status: 'Active', icon: <ShieldAlert size={18} />, color: 'text-yellow-500', bgColor: 'bg-yellow-500/10' },
-  ];
+  const [alertList, setAlertList] = useState([
+    {
+      id: 'ALT-CH-201',
+      type: 'Flash Flood & Cloudburst',
+      location: 'Uri / Gotthard Alpine Corridor',
+      time: '5 min ago',
+      severity: 'Critical',
+      status: 'Active',
+      impact: 'Gotthard Highway A2 & Rail Infrastructure',
+      action: 'Issue Level 4 Flash Flood Warning',
+      icon: <AlertTriangle size={18} />,
+      color: 'text-red-400',
+      badge: 'bg-red-500/20 text-red-400 border border-red-500/40',
+      dispatched: false,
+    },
+    {
+      id: 'ALT-CH-202',
+      type: 'Severe Supercell & Large Hail',
+      location: 'Lake Lucerne & Schwyz Basin',
+      time: '12 min ago',
+      severity: 'Critical',
+      status: 'Active',
+      impact: 'Lakeside settlements & electrical substations',
+      action: 'Civil Protection Siren Alert Triggered',
+      icon: <CloudHail size={18} />,
+      color: 'text-red-400',
+      badge: 'bg-red-500/20 text-red-400 border border-red-500/40',
+      dispatched: true,
+    },
+    {
+      id: 'ALT-CH-203',
+      type: 'Downburst & Wind Shear',
+      location: 'Zurich Airport (ZRH) Approaches',
+      time: '28 min ago',
+      severity: 'High',
+      status: 'Active',
+      impact: 'Aviation traffic & runway operations',
+      action: 'Advisory: Impose 30-min ground hold',
+      icon: <Wind size={18} />,
+      color: 'text-amber-400',
+      badge: 'bg-amber-500/20 text-amber-400 border border-amber-500/40',
+      dispatched: false,
+    },
+    {
+      id: 'ALT-CH-204',
+      type: 'Linear Frontal Convection',
+      location: 'Jura Mountains toward Basel',
+      time: '45 min ago',
+      severity: 'Moderate',
+      status: 'Active',
+      impact: 'Freight routes & Rhine navigation',
+      action: 'Monitor radar reflectivity growth rate',
+      icon: <Zap size={18} />,
+      color: 'text-amber-400',
+      badge: 'bg-amber-500/20 text-amber-400 border border-amber-500/40',
+      dispatched: false,
+    },
+    {
+      id: 'ALT-CH-200',
+      type: 'Pre-frontal Inflow Thunderstorm',
+      location: 'Ticino / Lake Maggiore Valleys',
+      time: '1h 30m ago',
+      severity: 'High',
+      status: 'Resolved',
+      impact: 'Southern mountain slopes',
+      action: 'Passed into dissipating stage',
+      icon: <CheckCircle2 size={18} />,
+      color: 'text-gray-400',
+      badge: 'bg-gray-800 text-gray-400 border border-gray-700',
+      dispatched: true,
+    },
+  ]);
 
-  const filteredAlerts = alerts.filter(alert => {
-    if (activeFilter === 'All') return true;
-    if (activeFilter === 'Active') return alert.status === 'Active';
-    if (activeFilter === 'Resolved') return alert.status === 'Resolved';
-    if (activeFilter === 'Critical') return alert.severity === 'Critical' || alert.severity === 'High';
+  const handleDispatch = (id, actionText) => {
+    setAlertList(prev => prev.map(a => a.id === id ? { ...a, dispatched: true } : a));
+    setToastMessage(`CAP Broadcast Transmitted: ${actionText} sent to Swiss Polyalert & Cantonal civil services.`);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const handleAcknowledge = (id) => {
+    setAlertList(prev => prev.map(a => a.id === id ? { ...a, status: 'Resolved' } : a));
+    setToastMessage(`Alert ${id} marked as acknowledged & resolved.`);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const filteredAlerts = alertList.filter(a => {
+    if (activeFilter === 'Active' && a.status !== 'Active') return false;
+    if (activeFilter === 'Critical' && a.severity !== 'Critical') return false;
+    if (activeFilter === 'Resolved' && a.status !== 'Resolved') return false;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const match = a.type.toLowerCase().includes(q) ||
+                    a.location.toLowerCase().includes(q) ||
+                    a.impact.toLowerCase().includes(q) ||
+                    a.id.toLowerCase().includes(q);
+      if (!match) return false;
+    }
     return true;
   });
 
   return (
-    <div className="flex-1 flex flex-col gap-4 h-full min-h-0">
-      
+    <div className="flex-1 flex flex-col gap-3 h-full min-h-0 select-none">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="bg-emerald-950/80 border border-emerald-500 text-emerald-200 px-4 py-2.5 rounded-xl text-xs flex items-center justify-between shadow-2xl animate-in slide-in-from-top-2 duration-200 shrink-0">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-emerald-400" />
+            <span>{toastMessage}</span>
+          </div>
+          <button onClick={() => setToastMessage(null)} className="text-emerald-400 hover:text-white font-bold ml-4">
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Top Header */}
-      <div className="flex items-center justify-between bg-[#111622] p-4 rounded-xl border border-gray-800/60 shrink-0">
+      <div className="flex items-center justify-between bg-[#111622] p-3 rounded-xl border border-gray-800/60 shrink-0 shadow-lg gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-blue-500/20 text-blue-400 rounded-lg"><Bell size={20} /></div>
+          <div className="p-2 bg-red-500/20 text-red-400 rounded-lg border border-red-500/30">
+            <Bell size={18} />
+          </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-200">Alert Center</h2>
-            <p className="text-xs text-gray-500">Manage and monitor automated early warnings</p>
+            <h2 className="text-sm font-bold text-gray-100 uppercase tracking-wide">
+              Swiss Civil Alert & Early Warning Center
+            </h2>
+            <p className="text-[11px] text-gray-400">Common Alerting Protocol (CAP v1.2) multi-hazard early warning dispatcher</p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-            <input 
-              type="text" 
-              placeholder="Search alerts..." 
-              className="w-[200px] bg-[#0a0d14] text-sm text-gray-300 placeholder-gray-600 rounded-full py-1.5 pl-9 pr-4 border border-gray-700/50 focus:outline-none focus:border-blue-500/50"
-            />
-          </div>
-          <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors">
-            Create Rule
-          </button>
+
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-xs">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search alerts (Uri, Zurich, Hail...)"
+            className="w-full bg-[#0a0d14] text-xs text-gray-200 placeholder-gray-500 rounded-lg pl-8 pr-3 py-1.5 border border-gray-700/60 focus:outline-none focus:border-blue-500/60"
+          />
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {['All', 'Active', 'Critical', 'Resolved'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeFilter === f
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                  : 'bg-[#182030] text-gray-400 hover:text-white border border-gray-700/60'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="flex-1 flex gap-4 min-h-0">
-         {/* Main List */}
-         <div className="flex-[2.5] flex flex-col gap-3 min-h-0">
-            {/* Filters */}
-            <div className="flex items-center gap-2">
-               <div className="flex items-center gap-2 mr-2 text-gray-500 text-sm"><Filter size={14} /> Filter:</div>
-               {['All', 'Active', 'Critical', 'Resolved'].map((filter, i) => (
-                 <button 
-                   key={i} 
-                   onClick={() => setActiveFilter(filter)}
-                   className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${activeFilter === filter ? 'bg-blue-600 text-white' : 'bg-[#111622] border border-gray-800/60 text-gray-400 hover:text-white'}`}
-                 >
-                   {filter}
-                 </button>
-               ))}
-            </div>
-
-            {/* Alert Items */}
-            <div className="flex-1 bg-[#111622] rounded-xl border border-gray-800/60 p-4 overflow-y-auto custom-scrollbar flex flex-col gap-3">
-               {filteredAlerts.map((alert, i) => (
-                 <div key={i} className={`flex items-start gap-4 p-4 rounded-xl border transition-all hover:bg-[#1a2133] ${alert.status === 'Active' ? 'border-gray-700/50 bg-[#0a0d14]' : 'border-gray-800/30 bg-[#0a0d14]/50 opacity-60'}`}>
-                    <div className={`p-2.5 rounded-lg ${alert.bgColor} ${alert.color} shrink-0`}>
-                      {alert.icon}
-                    </div>
-                    
-                    <div className="flex-1">
-                       <div className="flex justify-between items-start mb-1">
-                          <h3 className={`font-semibold ${alert.status === 'Active' ? 'text-gray-200' : 'text-gray-400'}`}>{alert.type}</h3>
-                          <span className="text-xs text-gray-500 font-mono">{alert.time}</span>
-                       </div>
-                       
-                       <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
-                          <span className="flex items-center gap-1"><span className="text-gray-500">ID:</span> {alert.id}</span>
-                          <span className="flex items-center gap-1"><span className="text-gray-500">Location:</span> {alert.location}</span>
-                       </div>
-
-                       <div className="flex items-center gap-2">
-                          <span className={`text-[10px] px-2 py-0.5 rounded font-medium border ${
-                             alert.severity === 'Critical' ? 'bg-red-500/10 border-red-500/30 text-red-400' :
-                             alert.severity === 'High' ? 'bg-orange-500/10 border-orange-500/30 text-orange-400' :
-                             alert.severity === 'Warning' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-400' :
-                             'bg-gray-800 border-gray-700 text-gray-400'
-                          }`}>
-                            {alert.severity} Severity
-                          </span>
-                          
-                          <span className={`text-[10px] px-2 py-0.5 rounded font-medium flex items-center gap-1 ${
-                            alert.status === 'Active' ? 'text-blue-400 bg-blue-500/10' : 'text-gray-500 bg-gray-800'
-                          }`}>
-                            {alert.status === 'Active' ? <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div> : <CheckCircle2 size={10} />}
-                            {alert.status}
-                          </span>
-                       </div>
-                    </div>
-                    
-                    {alert.status === 'Active' && (
-                      <button className="text-xs text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 px-3 py-1.5 rounded transition-colors shrink-0">
-                        Acknowledge
-                      </button>
+      {/* Main Alert Cards List */}
+      <div className="flex-1 flex flex-col gap-2.5 overflow-y-auto custom-scrollbar pr-1">
+        {filteredAlerts.length === 0 ? (
+          <div className="p-8 text-center text-xs text-gray-500 bg-[#111622] rounded-xl border border-gray-800">
+            No matching civil alerts found for "{searchQuery}".
+          </div>
+        ) : (
+          filteredAlerts.map((a) => (
+            <div
+              key={a.id}
+              className="p-3.5 rounded-xl bg-[#111622] border border-gray-800/80 hover:border-gray-700 transition-all flex items-center justify-between shadow-md"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className={`p-2.5 rounded-lg bg-[#0a0d14] border border-gray-800 ${a.color}`}>
+                  {a.icon}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-mono text-xs text-gray-500">{a.id}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${a.badge}`}>
+                      {a.severity.toUpperCase()}
+                    </span>
+                    <span className="text-[11px] text-gray-500">&bull; {a.time}</span>
+                    {a.dispatched && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-700/50 flex items-center gap-1">
+                        <Check size={10} /> DISPATCHED
+                      </span>
                     )}
-                 </div>
-               ))}
-            </div>
-         </div>
+                  </div>
+                  <h3 className="text-sm font-bold text-white">{a.type}</h3>
+                  <div className="flex items-center gap-1.5 text-xs text-blue-400 mt-1">
+                    <MapPin size={12} />
+                    <span>{a.location}</span>
+                  </div>
+                  <div className="text-[11px] text-gray-400 mt-1">
+                    Target Impact: <strong className="text-gray-300">{a.impact}</strong>
+                  </div>
+                </div>
+              </div>
 
-         {/* Right Sidebar Stats */}
-         <div className="flex-[1] flex flex-col gap-4 min-h-0">
-            <div className="bg-[#111622] rounded-xl border border-gray-800/60 p-4">
-               <h3 className="text-sm font-semibold text-gray-200 mb-4">Alert Summary</h3>
-               <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-lg flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-red-400">1</span>
-                    <span className="text-[10px] text-red-500/80 uppercase tracking-wider">Critical</span>
-                  </div>
-                  <div className="bg-orange-500/10 border border-orange-500/20 p-3 rounded-lg flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-orange-400">2</span>
-                    <span className="text-[10px] text-orange-500/80 uppercase tracking-wider">High Risk</span>
-                  </div>
-                  <div className="bg-blue-500/10 border border-blue-500/20 p-3 rounded-lg flex flex-col items-center justify-center col-span-2">
-                    <span className="text-2xl font-bold text-blue-400">4</span>
-                    <span className="text-[10px] text-blue-500/80 uppercase tracking-wider">Total Active Alerts</span>
-                  </div>
-               </div>
+              {/* Action Buttons */}
+              <div className="text-right flex flex-col items-end gap-2 shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs font-mono font-bold ${a.status === 'Active' ? 'text-red-400 animate-pulse' : 'text-gray-500'}`}>
+                    ● {a.status.toUpperCase()}
+                  </span>
+                  {a.status === 'Active' && (
+                    <button
+                      onClick={() => handleAcknowledge(a.id)}
+                      className="text-[10px] px-2 py-0.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-700 transition-colors"
+                      title="Acknowledge alert"
+                    >
+                      Acknowledge
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab('Live Nowcast')}
+                    className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 bg-blue-950/40 border border-blue-800/40 px-2.5 py-1 rounded transition-colors"
+                  >
+                    <Eye size={12} /> View on Map
+                  </button>
+
+                  <button
+                    onClick={() => handleDispatch(a.id, a.action)}
+                    className={`flex items-center gap-1.5 text-[11px] px-3 py-1 rounded border transition-all cursor-pointer font-medium ${
+                      a.dispatched
+                        ? 'bg-emerald-900/30 text-emerald-300 border-emerald-600/40'
+                        : 'bg-red-600/20 text-red-300 border-red-500/40 hover:bg-red-600/30 hover:border-red-400'
+                    }`}
+                  >
+                    <Send size={11} />
+                    {a.dispatched ? 'Re-broadcast CAP' : a.action}
+                  </button>
+                </div>
+              </div>
             </div>
-            
-            <div className="flex-1 bg-[#111622] rounded-xl border border-gray-800/60 p-4 flex flex-col">
-               <h3 className="text-sm font-semibold text-gray-200 mb-3">Notification Channels</h3>
-               <div className="flex flex-col gap-2">
-                 <div className="flex items-center justify-between p-2 hover:bg-gray-800/50 rounded transition-colors">
-                   <div className="flex items-center gap-2 text-sm text-gray-300">
-                     <div className="w-2 h-2 rounded-full bg-green-500"></div> SMS Gateway
-                   </div>
-                   <span className="text-xs text-green-400">Connected</span>
-                 </div>
-                 <div className="flex items-center justify-between p-2 hover:bg-gray-800/50 rounded transition-colors">
-                   <div className="flex items-center gap-2 text-sm text-gray-300">
-                     <div className="w-2 h-2 rounded-full bg-green-500"></div> Email Server
-                   </div>
-                   <span className="text-xs text-green-400">Connected</span>
-                 </div>
-                 <div className="flex items-center justify-between p-2 hover:bg-gray-800/50 rounded transition-colors">
-                   <div className="flex items-center gap-2 text-sm text-gray-300">
-                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div> Webhook API
-                   </div>
-                   <span className="text-xs text-red-400">Failing</span>
-                 </div>
-               </div>
-            </div>
-         </div>
+          ))
+        )}
       </div>
     </div>
   );

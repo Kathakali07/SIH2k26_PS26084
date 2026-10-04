@@ -1,39 +1,293 @@
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Activity, Satellite, Zap } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import L from 'leaflet';
+import { ChevronLeft, ChevronRight, Activity, Satellite, Zap, Compass, Wind, ShieldAlert, Thermometer, Layers, Plus, Minus } from 'lucide-react';
 
-export default function StormObjectDetail() {
-  const [activeTab, setActiveTab] = useState('Overview');
+export default function StormObjectDetail({ storms = [], setActiveTab, selectedStormId, onStormSelect }) {
+  const stormList = storms.map(s => s.properties);
+  const currentStorm = stormList.find(s => s.id === selectedStormId) || stormList[0] || {
+    id: 'storm_01',
+    name: 'Alpine Supercell',
+    hazard_type: 'Thunderstorm',
+    severity: 'HIGH',
+    max_dbz: 74.0,
+    area_km2: 420.0,
+    lifecycle: 'Mature',
+    motion: { speed_kmh: 38, direction_degrees: 45, east_kmh: 27, north_kmh: 27 },
+    nearest_target: 'Gotthard Highway/Tunnel',
+    indicators: { lightning_rate_flashes_min: 42, vil_kg_m2: 52, echo_top_km: 13.5, cape_jkg: 1850 },
+    hazards: { lightning: 0.88, hail: 0.72, downburst: 0.65, extreme_rain: 0.92 }
+  };
+
+  const [activeSubTab, setActiveSubTab] = useState('Overview');
   const [activeLayer, setActiveLayer] = useState('Radar');
 
-  return (
-    <div className="flex-1 flex flex-col gap-3 h-full">
-      {/* Top Bar for Detail */}
-      <div className="flex items-center justify-between bg-[#111622] rounded-xl border border-gray-800/60 p-3">
-        <div className="flex items-center gap-4">
-          <button className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors">
-            <ChevronLeft size={16} /> Back to Map
-          </button>
-          <div className="h-6 w-[1px] bg-gray-700"></div>
-          <h2 className="text-lg font-bold text-gray-200">Storm Cell A</h2>
-          <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded text-xs">Severe</span>
-          <span className="text-sm text-gray-400 ml-2">Lifecycle Stage: <span className="text-gray-200">Mature</span></span>
+  const currentIndex = stormList.findIndex(s => s.id === currentStorm.id);
+  const handlePrev = () => {
+    if (stormList.length > 0) {
+      const prevIdx = (currentIndex - 1 + stormList.length) % stormList.length;
+      onStormSelect?.(stormList[prevIdx].id);
+    }
+  };
+  const handleNext = () => {
+    if (stormList.length > 0) {
+      const nextIdx = (currentIndex + 1) % stormList.length;
+      onStormSelect?.(stormList[nextIdx].id);
+    }
+  };
+
+  const p = currentStorm;
+  const isHigh = p.severity === 'HIGH';
+  const isMod = p.severity === 'MODERATE';
+
+  // Map references
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const layersGroupRef = useRef(null);
+
+  const defaultCoords = {
+    storm_01: [46.75, 8.60], // Alpine Supercell: Uri / Gotthard Pass
+    storm_02: [46.70, 7.72], // Bernese Core: Bernese Oberland / Interlaken
+    storm_03: [47.30, 7.25], // Jura Frontal: Solothurn / Jura
+    storm_04: [46.22, 8.90], // Ticino Feeder: Bellinzona / Lugano
+  };
+  const stormLatLon = p.position 
+    ? [p.position.lat, p.position.lon] 
+    : defaultCoords[p.id] || [46.75, 8.60];
+
+  // Initialize Leaflet map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
+    if (!mapInstanceRef.current) {
+      const map = L.map(mapContainerRef.current, {
+        center: stormLatLon,
+        zoom: 9,
+        minZoom: 6,
+        maxZoom: 18,
+        maxBounds: [[41.0, 1.0], [52.5, 16.0]],
+        maxBoundsViscosity: 0.8,
+        zoomControl: false,
+      });
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        minZoom: 6,
+        maxZoom: 18,
+        noWrap: true,
+        className: 'dark-tiles',
+      }).addTo(map);
+
+      layersGroupRef.current = L.layerGroup().addTo(map);
+      mapInstanceRef.current = map;
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 150);
+    }
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Update map layers and center when selected storm or layer changes
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    const group = layersGroupRef.current;
+    if (!map || !group) return;
+
+    group.clearLayers();
+    map.setView(stormLatLon, 9, { animate: true });
+
+    const [cLat, cLng] = stormLatLon;
+    const dbz = p.max_dbz || 65;
+
+    // 1. Range Rings (10km, 25km, 50km)
+    [10000, 25000, 50000].forEach((r) => {
+      L.circle([cLat, cLng], {
+        radius: r,
+        color: 'rgba(148, 163, 184, 0.22)',
+        fill: false,
+        weight: 1,
+        dashArray: '4 4',
+        interactive: false,
+      }).addTo(group);
+    });
+
+    const dbzToColor = (val) => {
+      if (val >= 65) return 'rgba(168, 85, 247, 0.8)';
+      if (val >= 55) return 'rgba(239, 68, 68, 0.75)';
+      if (val >= 45) return 'rgba(249, 115, 22, 0.65)';
+      if (val >= 35) return 'rgba(234, 179, 8, 0.55)';
+      return 'rgba(34, 197, 94, 0.45)';
+    };
+
+    const spanKm = Math.sqrt(p.area_km2 || 350) / 2;
+    const baseR = Math.max(spanKm * 1000, 11000);
+
+    // 2. Concentric Reflectivity rings
+    [
+      { r: baseR * 2.2, d: dbz * 0.35, o: 0.2 },
+      { r: baseR * 1.6, d: dbz * 0.55, o: 0.32 },
+      { r: baseR * 1.1, d: dbz * 0.75, o: 0.48 },
+      { r: baseR * 0.7, d: dbz * 0.9, o: 0.65 },
+      { r: baseR * 0.35, d: dbz, o: 0.85 },
+    ].forEach((ring) => {
+      L.circle([cLat, cLng], {
+        radius: ring.r,
+        color: 'transparent',
+        fillColor: dbzToColor(ring.d),
+        fillOpacity: ring.o,
+        interactive: false,
+      }).addTo(group);
+    });
+
+    // 3. Storm Core Pin Marker
+    const stormIcon = L.divIcon({
+      className: 'storm-marker',
+      html: `
+        <div style="position:relative; width:26px; height:26px; display:flex; align-items:center; justify-content:center;">
+          <div style="position:absolute; width:100%; height:100%; border-radius:50%; background:rgba(239,68,68,0.5); animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite;"></div>
+          <div style="position:relative; width:12px; height:12px; border-radius:50%; background:#ef4444; border:2px solid #ffffff; box-shadow:0 0 12px #ef4444;"></div>
         </div>
+      `,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+    });
+
+    L.marker([cLat, cLng], { icon: stormIcon })
+      .bindTooltip(`<b>${p.name || p.id}</b><br>${dbz.toFixed(0)} dBZ • ${p.lifecycle || 'Mature'}`, {
+        permanent: true,
+        direction: 'top',
+        className: 'custom-tooltip',
+        offset: [0, -14],
+      })
+      .addTo(group);
+
+    // 4. Past Track & Future Forecast Track
+    const headingDeg = p.motion?.direction_degrees || 45;
+    const speedKmh = p.motion?.speed_kmh || 38;
+    const headingRad = (headingDeg * Math.PI) / 180;
+    const pastKm = (speedKmh * 0.5) / 111;
+    const pastLat = cLat - pastKm * Math.cos(headingRad);
+    const pastLng = cLng - (pastKm * Math.sin(headingRad)) / Math.cos((cLat * Math.PI) / 180);
+
+    L.polyline([[pastLat, pastLng], [cLat, cLng]], {
+      color: '#38bdf8',
+      weight: 3,
+      dashArray: '3 3',
+    }).addTo(group);
+
+    const futKm = (speedKmh * 1.0) / 111;
+    const futLat = cLat + futKm * Math.cos(headingRad);
+    const futLng = cLng + (futKm * Math.sin(headingRad)) / Math.cos((cLat * Math.PI) / 180);
+
+    L.polyline([[cLat, cLng], [futLat, futLng]], {
+      color: '#c084fc',
+      weight: 3,
+      dashArray: '6 4',
+    }).addTo(group);
+
+    // 5. Uncertainty Cone
+    const spreadRad = 0.26;
+    const coneLeftLat = cLat + futKm * Math.cos(headingRad - spreadRad);
+    const coneLeftLng = cLng + (futKm * Math.sin(headingRad - spreadRad)) / Math.cos((cLat * Math.PI) / 180);
+    const coneRightLat = cLat + futKm * Math.cos(headingRad + spreadRad);
+    const coneRightLng = cLng + (futKm * Math.sin(headingRad + spreadRad)) / Math.cos((cLat * Math.PI) / 180);
+
+    L.polygon([[cLat, cLng], [coneLeftLat, coneLeftLng], [coneRightLat, coneRightLng]], {
+      color: 'rgba(168, 85, 247, 0.45)',
+      fillColor: 'rgba(168, 85, 247, 0.14)',
+      weight: 1.5,
+    }).addTo(group);
+
+    // 6. Target Marker
+    const targetMap = {
+      storm_01: { name: 'Gotthard Highway / Tunnel', lat: 46.55, lon: 8.60 },
+      storm_02: { name: 'Interlaken / Bernese Hub', lat: 46.68, lon: 7.86 },
+      storm_03: { name: 'Basel Rhine Logistics', lat: 47.56, lon: 7.59 },
+      storm_04: { name: 'Lugano / Bellinzona Area', lat: 46.01, lon: 8.95 },
+    };
+    const target = targetMap[p.id] || { name: p.nearest_target || 'Target Hub', lat: cLat + 0.12, lon: cLng + 0.12 };
+
+    L.circleMarker([target.lat, target.lon], {
+      radius: 6,
+      color: '#ffffff',
+      fillColor: '#ef4444',
+      fillOpacity: 1,
+      weight: 2,
+    })
+      .bindTooltip(`<b>Target: ${target.name}</b><br>High Vulnerability Asset`, {
+        permanent: false,
+        className: 'custom-tooltip',
+      })
+      .addTo(group);
+
+  }, [p, activeLayer]);
+
+  return (
+    <div className="flex-1 flex flex-col gap-3 h-full min-h-0 select-none">
+      {/* Top Header Bar */}
+      <div className="flex items-center justify-between bg-[#111622] rounded-xl border border-gray-800/60 p-3 shrink-0 shadow-lg">
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-500">Last updated: 29 Sep 2026, 14:32 IST</span>
-          <div className="flex items-center gap-1">
-            <button className="p-1 rounded hover:bg-gray-800 text-gray-400 transition-colors"><ChevronLeft size={16} /> Previous</button>
-            <button className="p-1 rounded hover:bg-gray-800 text-gray-400 transition-colors">Next <ChevronRight size={16} /></button>
+          <button
+            onClick={() => setActiveTab('Live Nowcast')}
+            className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 bg-blue-950/40 border border-blue-800/40 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+          >
+            <ChevronLeft size={14} /> Back to Live Map
+          </button>
+          <div className="h-5 w-[1px] bg-gray-800"></div>
+
+          {/* Storm Title & Dropdown */}
+          <div className="flex items-center gap-2">
+            <select
+              value={p.id}
+              onChange={(e) => onStormSelect?.(e.target.value)}
+              className="bg-[#182030] text-sm font-bold text-gray-100 border border-gray-700/60 rounded-lg px-2.5 py-1 focus:outline-none focus:border-blue-500 cursor-pointer"
+            >
+              {stormList.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name || s.id} ({s.max_dbz?.toFixed(0)} dBZ)
+                </option>
+              ))}
+            </select>
+
+            <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+              isHigh ? 'bg-red-500/20 text-red-400 border border-red-500/40' :
+              isMod ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' :
+              'bg-blue-500/20 text-blue-400 border border-blue-500/40'
+            }`}>
+              {p.severity} SEVERITY
+            </span>
+
+            <span className="text-xs text-gray-400 ml-1">
+              Stage: <strong className="text-gray-200">{p.lifecycle || 'Mature'}</strong>
+            </span>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button onClick={handlePrev} className="px-2.5 py-1 rounded-lg bg-[#182030] hover:bg-gray-800 text-xs text-gray-300 flex items-center gap-1 border border-gray-700/50 transition-colors cursor-pointer">
+            <ChevronLeft size={13} /> Prev Storm
+          </button>
+          <button onClick={handleNext} className="px-2.5 py-1 rounded-lg bg-[#182030] hover:bg-gray-800 text-xs text-gray-300 flex items-center gap-1 border border-gray-700/50 transition-colors cursor-pointer">
+            Next Storm <ChevronRight size={13} />
+          </button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
-        {['Overview', 'Forecast', 'Hazards', 'Interactions', 'Impact', 'Environment'].map((tab, i) => (
-          <button 
-            key={i} 
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'bg-[#111622] text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800/60'}`}
+      {/* Detail Tabs */}
+      <div className="flex gap-2 shrink-0">
+        {['Overview', 'Forecast', 'Hazards', 'Interactions', 'Impact', 'Environment'].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveSubTab(tab)}
+            className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeSubTab === tab
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : 'bg-[#111622] text-gray-400 hover:text-white hover:bg-gray-800 border border-gray-800/60'
+            }`}
           >
             {tab}
           </button>
@@ -42,101 +296,205 @@ export default function StormObjectDetail() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex gap-3 min-h-0">
-        {/* Left Map Area */}
-        <div className="flex-[3] relative bg-[#0a0d14] rounded-xl border border-gray-800/60 overflow-hidden flex flex-col">
-          <div className="absolute top-4 left-4 z-10 bg-[#111622]/90 backdrop-blur border border-gray-700/50 rounded-xl p-2 flex flex-col gap-2">
-             <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white transition-colors"><input type="radio" checked={activeLayer === 'Radar'} onChange={() => setActiveLayer('Radar')} className="accent-blue-500" /> <Activity size={14}/> Radar</label>
-             <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white transition-colors"><input type="radio" checked={activeLayer === 'Satellite'} onChange={() => setActiveLayer('Satellite')} className="accent-blue-500" /> <Satellite size={14}/> Satellite</label>
-             <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:text-white transition-colors"><input type="radio" checked={activeLayer === 'Lightning'} onChange={() => setActiveLayer('Lightning')} className="accent-blue-500" /> <Zap size={14}/> Lightning</label>
+        {/* Left Map View with REAL LEAFLET MAP */}
+        <div className="flex-[3] relative bg-[#0a0d14] rounded-xl border border-gray-800/60 overflow-hidden flex flex-col shadow-lg">
+          {/* Leaflet map container */}
+          <div ref={mapContainerRef} className="w-full h-full bg-[#0a0d14]" />
+
+          {/* Layer switcher */}
+          <div className="absolute top-4 left-4 z-[400] bg-[#111622]/90 backdrop-blur border border-gray-700/60 rounded-xl p-2 flex flex-col gap-1.5 shadow-xl text-xs">
+            <label className="flex items-center gap-2 text-gray-300 cursor-pointer hover:text-white">
+              <input type="radio" checked={activeLayer === 'Radar'} onChange={() => setActiveLayer('Radar')} className="accent-blue-500" />
+              <Activity size={13} className="text-blue-400" /> Radar Reflectivity (dBZ)
+            </label>
+            <label className="flex items-center gap-2 text-gray-300 cursor-pointer hover:text-white">
+              <input type="radio" checked={activeLayer === 'Satellite'} onChange={() => setActiveLayer('Satellite')} className="accent-blue-500" />
+              <Satellite size={13} className="text-purple-400" /> Satellite IR Cloud Top
+            </label>
+            <label className="flex items-center gap-2 text-gray-300 cursor-pointer hover:text-white">
+              <input type="radio" checked={activeLayer === 'Lightning'} onChange={() => setActiveLayer('Lightning')} className="accent-blue-500" />
+              <Zap size={13} className="text-amber-400" /> EUCLID Lightning Density
+            </label>
           </div>
-          <div className="flex-1 relative">
-            {/* Fake Storm Map */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative w-64 h-64 transition-transform duration-1000 ease-in-out">
-                <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${activeLayer === 'Lightning' ? 'from-white via-purple-500/50' : activeLayer === 'Satellite' ? 'from-gray-300 via-gray-600/50' : 'from-red-600/80 via-yellow-500/40'} to-transparent rounded-full mix-blend-screen blur-md transition-colors duration-500`}></div>
-                <div className={`absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] ${activeLayer === 'Lightning' ? 'from-white via-white/80' : activeLayer === 'Satellite' ? 'from-white via-gray-300/80' : 'from-white via-red-500/80'} to-transparent rounded-full scale-50 transition-colors duration-500`}></div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-red-500 rounded-full border-2 border-white"></div>
-                
-                {/* Track line */}
-                <svg className="absolute inset-0 w-[500px] h-[500px] -ml-[118px] -mt-[118px] pointer-events-none" style={{overflow:'visible'}}>
-                   <path d="M 250 250 L 400 150" stroke="white" strokeWidth="2" strokeDasharray="5 5" fill="none" />
-                </svg>
-              </div>
-            </div>
-            {/* Legend */}
-            <div className="absolute bottom-4 left-4 bg-[#111622]/90 backdrop-blur border border-gray-700/50 rounded-lg p-3">
-              <div className="text-xs text-gray-300 mb-2">{activeLayer === 'Lightning' ? 'Flash Density' : activeLayer === 'Satellite' ? 'Cloud Top Temp' : 'Reflectivity (dBZ)'}</div>
-              <div className={`w-[200px] h-3 rounded bg-gradient-to-r ${activeLayer === 'Lightning' ? 'from-purple-900 via-purple-500 to-white' : activeLayer === 'Satellite' ? 'from-blue-900 via-gray-500 to-white' : 'from-blue-900 via-green-500 to-red-600'} mb-1`}></div>
-              <div className="flex justify-between text-[10px] text-gray-500">
-                <span>0</span><span>70</span>
-              </div>
-            </div>
-            {/* Scale */}
-            <div className="absolute bottom-4 right-4 flex flex-col items-center">
-              <div className="w-16 h-[1px] bg-gray-400 mb-1"></div>
-              <span className="text-[10px] text-gray-400">20 km</span>
+
+          {/* Zoom controls */}
+          <div className="absolute top-4 right-4 z-[400] flex flex-col gap-1 bg-[#111622]/90 backdrop-blur border border-gray-700/60 rounded-lg p-1 shadow-lg">
+            <button
+              onClick={() => mapInstanceRef.current?.zoomIn()}
+              className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors text-base font-bold cursor-pointer"
+            >
+              +
+            </button>
+            <div className="h-[1px] w-full bg-gray-700" />
+            <button
+              onClick={() => mapInstanceRef.current?.zoomOut()}
+              className="w-7 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-800 rounded transition-colors text-base font-bold cursor-pointer"
+            >
+              -
+            </button>
+          </div>
+
+          {/* Target callout */}
+          <div className="absolute bottom-4 right-4 z-[400] bg-[#111622]/90 backdrop-blur border border-gray-700/60 px-3 py-1.5 rounded-lg text-xs text-gray-300 shadow-xl">
+            <span className="text-gray-400">Target Area: </span>
+            <strong className="text-blue-400">{p.nearest_target || 'Gotthard / Lucerne Corridor'}</strong>
+          </div>
+
+          {/* Radar dBZ Colorbar */}
+          <div className="absolute bottom-4 left-4 z-[400] bg-[#111622]/90 backdrop-blur border border-gray-700/60 rounded-lg p-2.5 shadow-xl">
+            <div className="text-[10px] text-gray-300 mb-1 font-medium">Reflectivity dBZ Scale</div>
+            <div className="w-44 h-2.5 rounded bg-gradient-to-r from-blue-600 via-green-500 via-yellow-400 via-red-600 to-purple-600 mb-1" />
+            <div className="flex justify-between text-[9px] text-gray-400 font-mono">
+              <span>15</span><span>30</span><span>45</span><span>60</span><span>75+</span>
             </div>
           </div>
         </div>
 
-        {/* Right Info Area */}
-        <div className="flex-1 bg-[#111622] rounded-xl border border-gray-800/60 p-4">
-           <h3 className="text-sm font-semibold text-gray-200 mb-4">{activeTab} Details</h3>
-           {activeTab === 'Overview' && (
-             <div className="flex flex-col gap-3 text-sm animate-in fade-in slide-in-from-right-4 duration-500">
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Location</span><span className="text-gray-200">25.62° N, 85.14° E</span></div>
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Area</span><span className="text-gray-200">320 km²</span></div>
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Max dBZ</span><span className="text-gray-200">62</span></div>
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Top Height</span><span className="text-gray-200">12 km</span></div>
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Speed</span><span className="text-gray-200">38 km/h</span></div>
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Direction</span><span className="text-gray-200">NE (45°)</span></div>
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Lightning Rate</span><span className="text-gray-200">180/min</span></div>
-               <div className="flex justify-between hover:bg-gray-800/50 p-1 rounded transition-colors"><span className="text-gray-500">Growth Rate</span><span className="text-green-400">+22%/10min</span></div>
-             </div>
-           )}
-           {activeTab !== 'Overview' && (
-             <div className="flex h-[80%] items-center justify-center text-gray-500 animate-in fade-in duration-500">
-               {activeTab} data loading...
-             </div>
-           )}
+        {/* Right Info Panel */}
+        <div className="flex-1 bg-[#111622] rounded-xl border border-gray-800/60 p-4 flex flex-col overflow-y-auto custom-scrollbar shadow-lg">
+          <h3 className="text-xs font-bold text-gray-200 uppercase tracking-wider mb-3 pb-2 border-b border-gray-800">
+            {activeSubTab} Analysis: {p.name || p.id}
+          </h3>
+
+          {activeSubTab === 'Overview' && (
+            <div className="flex flex-col gap-2.5 text-xs">
+              <div className="flex justify-between p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Position</span>
+                <span className="text-gray-200 font-mono font-medium">
+                  {stormLatLon[0].toFixed(2)}°N, {stormLatLon[1].toFixed(2)}°E
+                </span>
+              </div>
+              <div className="flex justify-between p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Footprint Area</span>
+                <span className="text-gray-200 font-medium">{p.area_km2?.toFixed(0) || '420'} km²</span>
+              </div>
+              <div className="flex justify-between p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Max Reflectivity</span>
+                <span className="text-amber-400 font-bold">{p.max_dbz?.toFixed(1) || '74.0'} dBZ</span>
+              </div>
+              <div className="flex justify-between p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Echo Top Height</span>
+                <span className="text-gray-200 font-medium">{p.indicators?.echo_top_km || 13.5} km</span>
+              </div>
+              <div className="flex justify-between p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Ground Velocity</span>
+                <span className="text-gray-200 font-medium">
+                  {p.motion?.speed_kmh?.toFixed(0) || 38} km/h @ {p.motion?.direction_degrees?.toFixed(0) || 45}° (NE)
+                </span>
+              </div>
+              <div className="flex justify-between p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Lightning Rate</span>
+                <span className="text-yellow-400 font-semibold flex items-center gap-1">
+                  <Zap size={12} /> {p.indicators?.lightning_rate_flashes_min || 42} flashes/min
+                </span>
+              </div>
+              <div className="flex justify-between p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Critical Target</span>
+                <span className="text-blue-400 font-semibold">{p.nearest_target || 'Gotthard Highway/Tunnel'}</span>
+              </div>
+            </div>
+          )}
+
+          {activeSubTab === 'Forecast' && (
+            <div className="flex flex-col gap-2.5 text-xs">
+              <p className="text-gray-400 text-[11px] leading-relaxed">
+                DGMR Generative Nowcast projects this convective core to propagate Northeast along the Alpine valley with continued high reflectivity for the next 45 minutes.
+              </p>
+              <div className="p-2.5 rounded-lg bg-purple-950/30 border border-purple-800/40">
+                <span className="text-[10px] text-purple-300 font-bold block mb-1.5 uppercase">DGMR AI Forecast Waypoints</span>
+                <div className="flex justify-between text-gray-300 py-1 border-b border-purple-900/40">
+                  <span>+15m ETA:</span><strong>Gotthard Pass Core</strong>
+                </div>
+                <div className="flex justify-between text-gray-300 py-1 border-b border-purple-900/40">
+                  <span>+35m ETA:</span><strong>Lake Lucerne Basin</strong>
+                </div>
+                <div className="flex justify-between text-gray-300 py-1">
+                  <span>+60m ETA:</span><strong>Zurich South Perimeter</strong>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeSubTab === 'Hazards' && (
+            <div className="flex flex-col gap-2 text-xs">
+              {Object.entries(p.hazards || { lightning: 0.88, hail: 0.72, downburst: 0.65, extreme_rain: 0.92 }).map(([hazard, prob]) => (
+                <div key={hazard} className="p-2 rounded-lg bg-[#182030]/60 border border-gray-800">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="capitalize text-gray-300 font-medium">{hazard.replace('_', ' ')}</span>
+                    <span className="text-red-400 font-bold">{Math.round(prob * 100)}% Risk</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-500 rounded-full" style={{ width: `${prob * 100}%` }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {activeSubTab === 'Environment' && (
+            <div className="flex flex-col gap-2 text-xs">
+              <div className="flex justify-between p-2 rounded bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Surface CAPE</span>
+                <span className="text-gray-200 font-mono font-bold">1,850 J/kg (Extreme)</span>
+              </div>
+              <div className="flex justify-between p-2 rounded bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Deep Layer Shear (0-6km)</span>
+                <span className="text-gray-200 font-mono">22 m/s (Supercell favorable)</span>
+              </div>
+              <div className="flex justify-between p-2 rounded bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Downdraft CAPE (DCAPE)</span>
+                <span className="text-gray-200 font-mono">780 J/kg (Downburst risk)</span>
+              </div>
+              <div className="flex justify-between p-2 rounded bg-[#182030]/60 border border-gray-800">
+                <span className="text-gray-400">Freezing Level (0°C)</span>
+                <span className="text-gray-200 font-mono">3,850 m MSL</span>
+              </div>
+            </div>
+          )}
+
+          {['Interactions', 'Impact'].includes(activeSubTab) && (
+            <div className="text-xs text-gray-400 p-3 leading-relaxed">
+              {activeSubTab === 'Interactions' ? (
+                <>Storm interaction analysis detects severe inflow interaction with the <strong>Bernese Core Cell</strong>, indicating an elevated merger risk within 40–60 minutes over Central Switzerland.</>
+              ) : (
+                <>High impact exposure mapped to critical alpine infrastructure: <strong>Gotthard Highway/Tunnel</strong> (High vulnerability) and regional settlements in Uri and Lucerne basins.</>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Bottom Area */}
-      <div className="h-[90px] flex gap-3 shrink-0">
-         <div className="flex-[3] bg-[#111622] rounded-xl border border-gray-800/60 p-4 flex flex-col">
-            <h3 className="text-sm font-semibold text-gray-200 mb-2">Lifecycle Timeline</h3>
-            <div className="flex-1 relative flex items-center px-8">
-               <div className="absolute left-12 right-12 h-1 bg-gray-700 rounded-full"></div>
-               <div className="absolute left-12 w-2/3 h-1 bg-blue-500 rounded-full transition-all duration-1000"></div>
-               
-               <div className="flex justify-between w-full relative z-10">
-                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                   <div className="w-3 h-3 rounded-full bg-blue-500 group-hover:scale-150 transition-transform"></div>
-                   <span className="text-xs text-gray-400 group-hover:text-gray-300">Initiating</span>
-                 </div>
-                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                   <div className="w-3 h-3 rounded-full bg-blue-500 group-hover:scale-150 transition-transform"></div>
-                   <span className="text-xs text-gray-400 group-hover:text-gray-300">Developing</span>
-                 </div>
-                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                   <div className="w-4 h-4 rounded-full bg-blue-400 border-2 border-[#111622] group-hover:scale-125 transition-transform"></div>
-                   <span className="text-xs text-blue-400 font-bold">Mature</span>
-                 </div>
-                 <div className="flex flex-col items-center gap-2 group cursor-pointer">
-                   <div className="w-3 h-3 rounded-full bg-gray-600 group-hover:scale-150 transition-transform"></div>
-                   <span className="text-xs text-gray-500 group-hover:text-gray-400">Dissipating</span>
-                 </div>
-               </div>
-            </div>
-         </div>
-         <div className="flex-1 bg-[#111622] rounded-xl border border-gray-800/60 p-2 flex flex-col cursor-pointer group">
-            <h3 className="text-[11px] font-semibold text-gray-400 mb-1 group-hover:text-gray-300 transition-colors">Current Frame (14:32 IST)</h3>
-            <div className="flex-1 bg-[#0a0d14] rounded-lg overflow-hidden relative">
-               {/* Tiny radar view */}
-               <div className="absolute inset-0 bg-gradient-to-br from-green-400/30 via-yellow-500/50 to-red-600/80 mix-blend-screen scale-150 group-hover:scale-125 transition-transform duration-700"></div>
-            </div>
-         </div>
+      {/* Bottom Lifecycle Timeline */}
+      <div className="h-[80px] bg-[#111622] rounded-xl border border-gray-800/60 p-3 flex items-center justify-between shrink-0 shadow-lg">
+        <div className="flex flex-col gap-1 w-44">
+          <span className="text-xs font-bold text-gray-200 uppercase tracking-wide">Lifecycle Timeline</span>
+          <span className="text-[11px] text-gray-400">Current: <strong className="text-blue-400">{p.lifecycle || 'Mature'}</strong></span>
+        </div>
+
+        {/* Timeline steps */}
+        <div className="flex-1 max-w-xl flex items-center justify-between relative px-6">
+          <div className="absolute left-6 right-6 h-1 bg-gray-800 rounded-full"></div>
+          {['Initiating', 'Developing', 'Mature', 'Dissipating'].map((stage) => {
+            const isCurrent = p.lifecycle === stage || (stage === 'Mature' && !p.lifecycle);
+            const isPast = ['Initiating', 'Developing'].includes(stage) && p.lifecycle === 'Mature';
+            return (
+              <div key={stage} className="flex flex-col items-center gap-1 relative z-10">
+                <div className={`w-4 h-4 rounded-full border-2 transition-all ${
+                  isCurrent ? 'bg-blue-500 border-white scale-125 shadow-[0_0_12px_#3b82f6]' :
+                  isPast ? 'bg-blue-600 border-blue-400' : 'bg-gray-800 border-gray-600'
+                }`} />
+                <span className={`text-[11px] font-medium ${isCurrent ? 'text-blue-300 font-bold' : 'text-gray-500'}`}>
+                  {stage}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="text-right text-[11px] text-gray-400 w-44">
+          <div>Peak Intensity: <strong className="text-amber-400">{p.max_dbz?.toFixed(0)} dBZ</strong></div>
+          <div>Duration: <strong className="text-gray-200">1h 45m active</strong></div>
+        </div>
       </div>
     </div>
   );
