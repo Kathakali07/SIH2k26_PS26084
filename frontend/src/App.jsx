@@ -101,8 +101,14 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isPlaying, playbackSpeed]);
 
-  if (activeTab === 'Landing Page') {
-    return <LandingPage onEnterApp={() => setActiveTab('Live Nowcast')} />;
+  if (['Landing Page', 'About'].includes(activeTab)) {
+    return (
+      <LandingPage
+        page={activeTab}
+        onNavigate={setActiveTab}
+        onEnterApp={() => setActiveTab('Live Nowcast')}
+      />
+    );
   }
 
   const storms = geoData?.features || [];

@@ -1,9 +1,72 @@
-import React from 'react';
-import { Play, ArrowRight, ShieldCheck, Zap, BarChart2, Activity } from 'lucide-react';
+import React, { useEffect } from 'react';
+import { Play, ArrowRight, Mail } from 'lucide-react';
 
-export default function LandingPage({ onEnterApp }) {
+const NAV_ITEMS = [
+  { label: 'Home', page: 'Landing Page' },
+  { label: 'Live Map', page: 'Live Nowcast' },
+  { label: 'DGMR Ensemble', page: 'Multiple Futures' },
+  { label: 'Impact Risk', page: 'Impact Risk' },
+  { label: 'About', page: 'About' },
+  { label: 'Contact', page: 'Contact' },
+];
+
+const TEAM_MEMBERS = [
+  {
+    name: 'Satyam Puitandy',
+    email: 'puitandys05@gmail.com',
+    linkedin: 'https://in.linkedin.com/in/satyampuitandy',
+    github: 'https://github.com/puitandysatyam',
+  },
+  {
+    name: 'Kathakali KD',
+    email: '2004kathakali@gmail.com',
+    linkedin: 'https://www.linkedin.com/in/kathakali-kd-46a93623b/',
+    github: 'https://github.com/Kathakali07',
+  },
+  {
+    name: 'Rabi Shankar Roy',
+    linkedin: 'https://www.linkedin.com/in/rabishankar-roy-055a52343/',
+  },
+  {
+    name: 'Subhankar Nath',
+    email: 'nathsubhankar57@gmail.com',
+    linkedin: 'https://www.linkedin.com/in/subhankar-nath-674998325/',
+  },
+  {
+    name: 'Anamika Pathak',
+    email: 'anamikapathak587@gmail.com',
+    linkedin: 'https://www.linkedin.com/in/anamika-pathak-bb60a2325/',
+  },
+  {
+    name: 'Anindito Patra',
+    linkedin: 'https://www.linkedin.com/in/anindito-patra-260701323/',
+  },
+];
+
+export default function LandingPage({ page = 'Landing Page', onNavigate, onEnterApp }) {
+  const navigate = (nextPage) => {
+    if (nextPage === 'Contact') {
+      window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#contact-section`);
+      if (page !== 'Landing Page') onNavigate?.('Landing Page');
+      else document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    if (nextPage === 'Landing Page' && page === 'Landing Page') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      onNavigate?.(nextPage);
+    }
+  };
+
+  useEffect(() => {
+    if (page === 'Landing Page' && window.location.hash === '#contact-section') {
+      requestAnimationFrame(() => document.getElementById('contact-section')?.scrollIntoView({ behavior: 'smooth' }));
+    }
+  }, [page]);
+
   return (
-    <div className="h-screen w-screen bg-[#02050a] text-white flex flex-col font-sans overflow-hidden relative select-none">
+    <div className="min-h-screen w-full bg-[#02050a] text-white flex flex-col font-sans overflow-x-hidden relative">
       {/* Background Image / Gradient */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-b from-[#02050a] via-transparent to-[#02050a] z-10"></div>
@@ -13,8 +76,8 @@ export default function LandingPage({ onEnterApp }) {
       </div>
 
       {/* Navbar */}
-      <nav className="relative z-20 flex items-center justify-between px-8 py-6">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={onEnterApp}>
+      <nav className="relative z-20 flex flex-wrap items-center justify-between gap-x-5 gap-y-4 px-6 py-6 sm:px-8">
+        <button type="button" className="flex items-center gap-3 cursor-pointer text-left" onClick={() => navigate('Landing Page')} aria-label="ClimaX home">
           <div className="w-8 h-8 text-blue-500">
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
               <path d="M12 0l2.5 8.5L23 12l-8.5 2.5L12 24l-2.5-8.5L1 12l8.5-2.5z" />
@@ -24,15 +87,22 @@ export default function LandingPage({ onEnterApp }) {
             <span className="text-xl font-bold tracking-wide">ClimaX</span>
             <span className="text-[10px] text-blue-400 font-mono block -mt-1">ClimaX DGMR</span>
           </div>
+        </button>
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-gray-300">
+          {NAV_ITEMS.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              onClick={() => navigate(item.page)}
+              aria-current={page === item.page ? 'page' : undefined}
+              className={`${page === item.page ? 'text-white' : 'hover:text-blue-400'} transition-colors`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-        <div className="flex items-center gap-8 text-sm text-gray-300">
-          <button onClick={onEnterApp} className="text-white hover:text-blue-400 transition-colors">Home</button>
-          <button onClick={onEnterApp} className="hover:text-blue-400 transition-colors">Live Map</button>
-          <button onClick={onEnterApp} className="hover:text-blue-400 transition-colors">DGMR Ensemble</button>
-          <button onClick={onEnterApp} className="hover:text-blue-400 transition-colors">Impact Risk</button>
-          <button onClick={onEnterApp} className="hover:text-blue-400 transition-colors">About</button>
-        </div>
-        <button 
+        <button
+          type="button"
           onClick={onEnterApp}
           className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-semibold transition-all shadow-lg shadow-blue-600/30 cursor-pointer"
         >
@@ -40,20 +110,38 @@ export default function LandingPage({ onEnterApp }) {
         </button>
       </nav>
 
+      {page === 'About' ? (
+        <main className="relative z-20 flex-1 flex items-center px-6 sm:px-16">
+          <section className="w-full max-w-4xl rounded-3xl border border-blue-400/20 bg-[#080e1a]/85 p-7 sm:p-12 shadow-2xl backdrop-blur-md">
+            <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-blue-300">About ClimaX</p>
+            <h1 className="mb-5 text-4xl font-extrabold leading-tight sm:text-5xl">Understand storms.<br /><span className="text-blue-300">Prepare with clarity.</span></h1>
+            <p className="max-w-3xl text-base leading-relaxed text-gray-300 sm:text-lg">
+              ClimaX is a storm-monitoring and nowcasting prototype that brings storm tracks, hazard views, scenario ensembles, and impact-risk tools together in one interface.
+            </p>
+            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-400">
+              This project is a demonstration. Its scenario and forecast values are simulated and should not be used as official weather warnings.
+            </p>
+            <button type="button" onClick={onEnterApp} className="mt-8 inline-flex items-center gap-2 rounded-full bg-blue-600 px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-blue-500">
+              Explore the demo <ArrowRight size={16} />
+            </button>
+          </section>
+        </main>
+      ) : (
+      <>
       {/* Hero Section */}
-      <main className="relative z-20 flex-1 flex flex-col justify-center px-16 max-w-4xl">
+      <main className="relative z-20 flex-1 flex flex-col justify-center px-6 py-12 sm:px-16 sm:py-16 max-w-4xl">
         <div className="inline-flex items-center gap-2 bg-blue-950/60 border border-blue-500/40 rounded-full px-3.5 py-1 text-xs text-blue-300 w-fit mb-4 backdrop-blur">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           DeepMind DGMR Neural Convective Nowcasting System &bull; Swiss Radar Composite
         </div>
 
-        <h1 className="text-6xl font-extrabold leading-tight mb-5 tracking-tight">
+        <h1 className="text-4xl font-extrabold leading-tight mb-5 tracking-tight sm:text-6xl">
           From Storms <br/>
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-purple-400">
             to Safer Tomorrows
           </span>
         </h1>
-        <p className="text-gray-300 text-lg mb-8 max-w-2xl leading-relaxed">
+        <p className="text-gray-300 text-base mb-8 max-w-2xl leading-relaxed sm:text-lg">
           Operational deep generative AI nowcasting for severe thunderstorms, large hail, destructive downbursts, and flash cloudbursts with spatio-temporal uncertainty quantification.
         </p>
         <div className="flex gap-4">
@@ -73,26 +161,67 @@ export default function LandingPage({ onEnterApp }) {
       </main>
 
       {/* Bottom Features */}
-      <div className="relative z-20 px-16 pb-10 flex gap-4">
+      <div className="relative z-20 px-6 pb-10 flex flex-col gap-4 sm:flex-row sm:px-16">
         {[
-          { icon: '🌩️', title: 'Storm-as-an-Object\nTracking', desc: 'Objectified cell kinematics & lifecycle stages' },
-          { icon: '🔮', title: 'Multiple Possible\nFutures', desc: '16 DGMR Monte Carlo generative ensemble tracks' },
-          { icon: '🎯', title: 'Hazard-Specific\nForecasting', desc: 'Discrete probabilities for Hail, Rain, Shear & Lightning' },
-          { icon: '🛡️', title: 'Impact Risk &\nCritical Assets', desc: 'Vulnerability mapping for airports, highways & dams' }
-        ].map((feat, i) => (
-          <div 
-            key={i} 
-            onClick={onEnterApp}
-            className="flex-1 bg-[#111622]/70 backdrop-blur-md border border-gray-800/80 p-5 rounded-2xl hover:bg-[#161e30] hover:border-blue-500/40 transition-all cursor-pointer group shadow-lg"
+          { icon: '🌩️', title: 'Storm-as-an-Object\nTracking', desc: 'Objectified cell kinematics & lifecycle stages', page: 'Storm Objects' },
+          { icon: '🔮', title: 'Multiple Possible\nFutures', desc: '16 DGMR Monte Carlo generative ensemble tracks', page: 'Multiple Futures' },
+          { icon: '🎯', title: 'Hazard-Specific\nForecasting', desc: 'Discrete probabilities for Hail, Rain, Shear & Lightning', page: 'Hazard Forecast' },
+          { icon: '🛡️', title: 'Impact Risk &\nCritical Assets', desc: 'Vulnerability mapping for airports, highways & dams', page: 'Impact Risk' }
+        ].map((feat) => (
+          <button
+            type="button"
+            key={feat.page}
+            onClick={() => navigate(feat.page)}
+            className="flex-1 bg-[#111622]/70 backdrop-blur-md border border-gray-800/80 p-5 rounded-2xl hover:bg-[#161e30] hover:border-blue-500/40 transition-all cursor-pointer group shadow-lg text-left"
           >
             <div className="text-2xl mb-2">{feat.icon}</div>
             <h3 className="text-sm font-bold text-gray-200 group-hover:text-blue-400 transition-colors whitespace-pre-line leading-tight">
               {feat.title}
             </h3>
             <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">{feat.desc}</p>
-          </div>
+          </button>
         ))}
       </div>
+
+      <section id="contact-section" className="relative z-20 scroll-mt-8 border-t border-gray-800/80 bg-[#060a12]/95 px-6 py-14 sm:px-16 sm:py-16">
+        <div className="mx-auto max-w-[1440px]">
+          <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-blue-300">The people behind ClimaX</p>
+          <h2 className="text-3xl font-extrabold sm:text-4xl">Meet our team</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-gray-400">
+            ClimaX brings storm tracking, hazard forecasting, and impact-risk insights into one experience. Connect with our team through the profiles below.
+          </p>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TEAM_MEMBERS.map((member) => (
+              <article key={member.name} className="rounded-2xl border border-gray-800 bg-[#111622]/80 p-5 shadow-lg">
+                <h3 className="text-lg font-bold text-white">{member.name}</h3>
+                <p className="mt-1 break-all text-xs text-gray-400">{member.email || 'Email not provided'}</p>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  {member.email && (
+                    <a href={`mailto:${member.email}`} className="inline-flex items-center gap-2 rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-300 transition-colors hover:border-blue-400 hover:text-white">
+                      <Mail size={14} /> Email
+                    </a>
+                  )}
+                  {member.linkedin && (
+                    <a href={member.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-300 transition-colors hover:border-blue-400 hover:text-white">
+                      <span aria-hidden="true" className="font-bold text-blue-300">in</span> LinkedIn
+                    </a>
+                  )}
+                  {member.github && (
+                    <a href={member.github} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-gray-700 px-3 py-2 text-xs text-gray-300 transition-colors hover:border-blue-400 hover:text-white">
+                      <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4 fill-current text-gray-200">
+                        <path d="M12 .8a11.2 11.2 0 0 0-3.54 21.83c.56.1.77-.24.77-.54v-2.1c-3.13.68-3.79-1.33-3.79-1.33-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 .1.75 2.2 2.66 1.24.1-.73.4-1.23.72-1.51-2.5-.29-5.13-1.25-5.13-5.57 0-1.23.44-2.23 1.16-3.02-.12-.29-.5-1.43.11-2.99 0 0 .95-.3 3.08 1.15a10.7 10.7 0 0 1 5.6 0c2.14-1.45 3.08-1.15 3.08-1.15.61 1.56.23 2.7.12 2.99.72.79 1.15 1.79 1.15 3.02 0 4.33-2.63 5.28-5.14 5.56.4.35.76 1.02.76 2.06v3.05c0 .3.2.65.77.54A11.2 11.2 0 0 0 12 .8Z" />
+                      </svg>
+                      GitHub
+                    </a>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+      </>
+      )}
     </div>
   );
 }
