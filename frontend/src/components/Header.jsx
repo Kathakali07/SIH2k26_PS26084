@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, ChevronRight, X } from 'lucide-react';
+import { Search, MapPin, ChevronRight, X, Smartphone, Download } from 'lucide-react';
 
 export default function Header({ setActiveTab }) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -120,6 +120,19 @@ export default function Header({ setActiveTab }) {
           )}
         </div>
         
+        {/* Android APK Download Button */}
+        <a
+          href="https://github.com/Kathakali07/SIH2k26_PS26084/releases"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-500/10 via-teal-500/15 to-emerald-500/10 hover:from-emerald-500/25 hover:to-teal-500/30 border border-emerald-500/30 hover:border-emerald-400/70 text-emerald-400 hover:text-emerald-300 text-xs font-semibold shadow-[0_0_12px_rgba(16,185,129,0.12)] hover:shadow-[0_0_20px_rgba(16,185,129,0.25)] transition-all duration-200 hover:-translate-y-0.5 group"
+          title="Download ClimaX Android App (APK Release)"
+        >
+          <Smartphone size={13} className="text-emerald-400 group-hover:scale-110 transition-transform" />
+          <span className="tracking-wide">Android App</span>
+          <Download size={12} className="text-emerald-400 opacity-80 group-hover:translate-y-0.5 transition-transform" />
+        </a>
+
         {/* Live Status indicator */}
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Play, ArrowRight, Mail, CloudLightning, Activity, ShieldAlert, AlertTriangle } from 'lucide-react';
+import { Play, ArrowRight, Mail, CloudLightning, Activity, ShieldAlert, AlertTriangle, Smartphone, Download } from 'lucide-react';
 import EarthGlobe from './EarthGlobe';
 
 const NAV_ITEMS = [
@@ -108,13 +108,25 @@ export default function LandingPage({ page = 'Landing Page', onNavigate, onEnter
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onEnterApp}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-medium hover:shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:scale-105 transition-all duration-300"
-        >
-          Get Started
-        </button>
+        <div className="flex items-center gap-3">
+          <a
+            href="https://github.com/Kathakali07/SIH2k26_PS26084/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-400/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:-translate-y-0.5 transition-all duration-300 group"
+          >
+            <Smartphone size={14} className="group-hover:scale-110 transition-transform" />
+            <span>Android APK</span>
+            <Download size={13} className="opacity-80 group-hover:translate-y-0.5 transition-transform" />
+          </a>
+          <button
+            type="button"
+            onClick={onEnterApp}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-medium hover:shadow-[0_0_15px_rgba(37,99,235,0.5)] hover:scale-105 transition-all duration-300"
+          >
+            Get Started
+          </button>
+        </div>
       </nav>
 
       {page === 'About' ? (
@@ -156,7 +168,7 @@ export default function LandingPage({ page = 'Landing Page', onNavigate, onEnter
           <p className="text-gray-300 text-base mb-8 max-w-xl leading-relaxed sm:text-lg animate-fade-up delay-200">
             Operational deep generative AI nowcasting for severe thunderstorms, large hail, destructive downbursts, and flash cloudbursts with spatio-temporal uncertainty quantification.
           </p>
-          <div className="flex flex-wrap gap-4 animate-fade-up delay-300">
+          <div className="flex flex-wrap items-center gap-4 animate-fade-up delay-300">
             <button 
               onClick={onEnterApp}
               className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3.5 rounded-full font-bold flex items-center gap-2 hover:shadow-[0_0_20px_rgba(37,99,235,0.6)] hover:-translate-y-1 transition-all duration-300 group text-sm"
@@ -167,8 +179,22 @@ export default function LandingPage({ page = 'Landing Page', onNavigate, onEnter
               onClick={onEnterApp}
               className="bg-[#111622]/80 backdrop-blur border border-gray-700 hover:bg-[#1e293b]/90 text-white px-7 py-3.5 rounded-full font-semibold flex items-center gap-2 hover:border-gray-500 hover:-translate-y-1 transition-all duration-300 group text-sm"
             >
-              <Play fill="currentColor" size={14} className="text-blue-400 group-hover:text-blue-300 transition-colors" /> Enter Interactive Demo
+              <Play fill="currentColor" size={14} className="text-blue-400 group-hover:text-blue-300 transition-colors" /> Interactive Demo
             </button>
+            <a
+              href="https://github.com/Kathakali07/SIH2k26_PS26084/releases"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full text-sm font-bold text-white bg-gradient-to-r from-emerald-600/90 via-teal-600/90 to-emerald-500/90 hover:from-emerald-500 hover:to-teal-500 border border-emerald-400/40 shadow-[0_0_22px_rgba(16,185,129,0.3)] hover:shadow-[0_0_32px_rgba(16,185,129,0.5)] hover:-translate-y-1 transition-all duration-300 group"
+            >
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <Smartphone size={16} className="text-emerald-100 group-hover:scale-110 transition-transform" />
+              <span>Download Android APK</span>
+              <Download size={14} className="text-emerald-200 group-hover:translate-y-0.5 transition-transform" />
+            </a>
           </div>
         </div>
         <div className="w-full md:w-1/2 flex justify-center md:justify-end items-center relative animate-fade-up delay-400">
