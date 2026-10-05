@@ -31,7 +31,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
             <button
               key={index}
               onClick={() => setActiveTab(item.label)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-[color,background-color,border-color,transform,box-shadow] duration-150 ${
                 isActive 
                   ? 'bg-[#1e293b] text-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.15)] translate-x-1' 
                   : 'text-gray-400 hover:text-gray-200 hover:bg-[#111622] hover:translate-x-1 hover:shadow-[0_0_10px_rgba(37,99,235,0.1)]'

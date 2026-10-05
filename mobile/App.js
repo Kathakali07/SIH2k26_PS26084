@@ -19,6 +19,8 @@ import EnsembleScreen from './src/screens/EnsembleScreen';
 import SensorsScreen from './src/screens/SensorsScreen';
 import AlertsScreen from './src/screens/AlertsScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import InteractionsScreen from './src/screens/InteractionsScreen';
+import ReplayScreen from './src/screens/ReplayScreen';
 
 import {
   DEFAULT_API_BASE,
@@ -158,16 +160,21 @@ export default function App() {
         );
       case 'Hazard Matrix':
         return <HazardsScreen storms={storms} />;
+      case 'Storm Interactions':
+        return <InteractionsScreen storms={storms} />;
       case 'Impact Risk':
         return <ImpactScreen storms={storms} />;
       case 'Multiple Futures':
         return <EnsembleScreen />;
+      case 'Historical Replay':
+        return <ReplayScreen />;
       case 'Data & Sensors':
         return (
           <SensorsScreen
             radarActive={radarActive}
             onToggleRadar={handleToggleRadar}
             onResetSystem={handleResetSystem}
+            apiBase={apiBase}
           />
         );
       case 'Emergency Alerts':

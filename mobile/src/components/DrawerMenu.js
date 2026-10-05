@@ -23,6 +23,7 @@ import {
   Zap,
   Activity,
   Layers,
+  RotateCcw,
 } from 'lucide-react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -61,6 +62,13 @@ export default function DrawerMenu({
           icon: AlertTriangle,
           color: '#f59e0b',
         },
+        {
+          id: 'Storm Interactions',
+          label: 'Storm Interactions',
+          subLabel: 'GNN graph, mergers & cold pools',
+          icon: Zap,
+          color: '#eab308',
+        },
       ],
     },
     {
@@ -79,6 +87,13 @@ export default function DrawerMenu({
           subLabel: 'DGMR probabilistic divergence',
           icon: GitBranch,
           color: '#a855f7',
+        },
+        {
+          id: 'Historical Replay',
+          label: 'Historical Replay',
+          subLabel: 'PySTEPS benchmark vs DGMR AI',
+          icon: RotateCcw,
+          color: '#38bdf8',
         },
       ],
     },

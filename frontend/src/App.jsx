@@ -89,16 +89,13 @@ export default function App() {
     };
   }, [frameIndex, activeTab]);
 
-  // Dynamically scale root font size based on current view
+  // Set root font size cleanly without resetting to default on internal tab transitions
   useEffect(() => {
-    if (['Landing Page', 'About'].includes(activeTab)) {
-      document.documentElement.style.fontSize = '16px';
-    } else {
-      document.documentElement.style.fontSize = '12px';
+    const isLanding = ['Landing Page', 'About'].includes(activeTab);
+    const targetSize = isLanding ? '16px' : '12px';
+    if (document.documentElement.style.fontSize !== targetSize) {
+      document.documentElement.style.fontSize = targetSize;
     }
-    return () => {
-      document.documentElement.style.fontSize = '';
-    };
   }, [activeTab]);
 
   // Animation loop: advance frame smoothly when playing

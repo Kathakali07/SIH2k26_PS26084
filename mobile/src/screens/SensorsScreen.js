@@ -16,14 +16,40 @@ import {
   RotateCcw,
   CheckCircle2,
   XCircle,
+  Database,
+  Terminal,
+  UploadCloud,
 } from 'lucide-react-native';
 
 export default function SensorsScreen({
   radarActive = true,
   onToggleRadar,
   onResetSystem,
+  apiBase = 'https://sih2k26-ps26084.onrender.com',
 }) {
   const [loading, setLoading] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+  const [ingestionResult, setIngestionResult] = useState(null);
+
+  const handleIngestPreset = async (preset, source_name) => {
+    setIngesting(true);
+    try {
+      const res = await fetch(`${apiBase}/api/ingest/radar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preset, source_name }),
+      });
+      const data = await res.json();
+      setIngestionResult(data);
+    } catch (e) {
+      setIngestionResult({
+        status: 'error',
+        message: e.message || 'Ingestion failed',
+      });
+    } finally {
+      setIngesting(false);
+    }
+  };
 
   const handleRadarPress = async () => {
     setLoading(true);
@@ -139,6 +165,86 @@ export default function SensorsScreen({
                 Satellite IR & Lightning proxies.
               </Text>
             </View>
+          </View>
+        )}
+      </View>
+
+      {/* 1-Tap National Radar Ingestion Engine */}
+      <View style={styles.ingestionCard}>
+        <View style={styles.ingestionHeader}>
+          <Database size={15} color="#38bdf8" style={{ marginRight: 6 }} />
+          <Text style={styles.cardHeaderTitle}>RADAR SCAN INGESTION PIPELINE</Text>
+        </View>
+        <Text style={styles.cardHeaderSub}>
+          Simulate direct radar sweep ingestion into the DGMR neural nowcasting pipeline:
+        </Text>
+
+        <View style={styles.presetCol}>
+          <TouchableOpacity
+            style={styles.presetBtn}
+            onPress={() => handleIngestPreset('meteoswiss_rad4alps', 'MeteoSwiss Rad4Alps Composite')}
+            disabled={ingesting}
+            activeOpacity={0.7}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.presetTitle}>MeteoSwiss Rad4Alps</Text>
+              <Text style={styles.presetSub}>5 C-Band Radars • 1.0 km • Alpine grid</Text>
+            </View>
+            <Text style={styles.presetAction}>INGEST</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.presetBtn}
+            onPress={() => handleIngestPreset('imd_kolkata_doppler', 'IMD Kolkata S-Band Doppler (DWR)')}
+            disabled={ingesting}
+            activeOpacity={0.7}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.presetTitle}>IMD Kolkata Doppler</Text>
+              <Text style={styles.presetSub}>India Met Dept DWR • 250 km radius</Text>
+            </View>
+            <Text style={[styles.presetAction, { color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.4)' }]}>INGEST</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.presetBtn}
+            onPress={() => handleIngestPreset('noaa_nexrad_volume', 'NOAA NEXRAD WSR-88D Level-II')}
+            disabled={ingesting}
+            activeOpacity={0.7}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={styles.presetTitle}>NOAA NEXRAD Volume</Text>
+              <Text style={styles.presetSub}>Super-Res Base Reflectivity</Text>
+            </View>
+            <Text style={[styles.presetAction, { color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.4)' }]}>INGEST</Text>
+          </TouchableOpacity>
+        </View>
+
+        {ingesting && (
+          <View style={styles.ingestingRow}>
+            <ActivityIndicator size="small" color="#38bdf8" style={{ marginRight: 8 }} />
+            <Text style={styles.ingestingText}>Processing 4D DGMR Tensor...</Text>
+          </View>
+        )}
+
+        {ingestionResult && (
+          <View style={styles.telemetryBox}>
+            <View style={styles.telemetryHeader}>
+              <CheckCircle2 size={13} color="#10b981" style={{ marginRight: 5 }} />
+              <Text style={styles.telemetryTitle}>
+                {ingestionResult.status === 'success' ? 'Scan Ingested & DGMR Tensor Ready' : 'Ingestion Response'}
+              </Text>
+            </View>
+            <Text style={styles.telemetryBody}>
+              {ingestionResult.message || JSON.stringify(ingestionResult, null, 2)}
+            </Text>
+            {ingestionResult.dgmr_input_tensor && (
+              <View style={styles.tensorBadge}>
+                <Text style={styles.tensorBadgeText}>
+                  Tensor: [1, 4, 1, 256, 256] • Horizon: 90m (18 frames)
+                </Text>
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -397,5 +503,96 @@ const styles = StyleSheet.create({
     height: 18,
     backgroundColor: 'rgba(255,255,255,0.08)',
     marginHorizontal: 8,
+  },
+  ingestionCard: {
+    backgroundColor: '#0c1322',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    padding: 14,
+    marginBottom: 20,
+  },
+  ingestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  presetCol: {
+    marginTop: 10,
+    gap: 8,
+  },
+  presetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#070b14',
+    borderWidth: 1,
+    borderColor: '#1e293b',
+    borderRadius: 10,
+    padding: 10,
+  },
+  presetTitle: {
+    color: '#f8fafc',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  presetSub: {
+    color: '#64748b',
+    fontSize: 10,
+    marginTop: 1,
+  },
+  presetAction: {
+    color: '#38bdf8',
+    fontSize: 10,
+    fontWeight: '800',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.4)',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  ingestingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  ingestingText: {
+    color: '#38bdf8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  telemetryBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.25)',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 10,
+  },
+  telemetryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  telemetryTitle: {
+    color: '#34d399',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  telemetryBody: {
+    color: '#94a3b8',
+    fontSize: 10,
+    lineHeight: 14,
+  },
+  tensorBadge: {
+    backgroundColor: '#070b14',
+    padding: 4,
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  tensorBadgeText: {
+    color: '#cbd5e1',
+    fontSize: 9,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });
